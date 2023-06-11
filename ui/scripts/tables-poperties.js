@@ -42,7 +42,7 @@ export function getInputString(i) {
 }
 
 export function getInputBool(i) {
-    let valu = document.querySelector(`input[name="${i.firstChild.name}"]:checked`);
+    let valu = document.querySelector(`input[name="${i.firstChild.lastChild.name}"]:checked`);
     if (valu === null) {
         return null;
     }
@@ -54,7 +54,7 @@ export function getInputDatetime(i) {
     return i.value;
 }
 
-export function setInputString(i) {
+export function setInputString(i, prefix) {
     i.style.width = "225px";
     let bar = document.createElement('input');
     bar.type = "text";
@@ -65,7 +65,7 @@ export function setInputString(i) {
     return bar;
 }
 
-export function setInputBool(i) {
+export function setInputBool(i, prefix) {
     let bar = document.createElement('div');
     bar.name = i.name;
     //bar.style = "margin-left: 6px;";
@@ -75,19 +75,21 @@ export function setInputBool(i) {
         let varBut = document.createElement('input');
         varBut.type = "radio";
         varBut.id = `radio-${i.name}-${element}`;
-        varBut.name = "bar-choice";
+        varBut.name = `${prefix}-bar-choice`;
         varBut.value = element;
-        bar.appendChild(varBut);
         let varButLabel = document.createElement('label');
-        varButLabel.for = "bar-choice";
+        varButLabel.for = `${prefix}-bar-choice`;
         varButLabel.textContent = element;
+        varButLabel.classList.add("radio");
+        varButLabel.appendChild(varBut);
         bar.appendChild(varButLabel);
     });
-    //i.style.width = 48 + 8 * len + "px";
+    i.style.width = 48 + 8 * len + "px";
     return bar;
 }
 
-export function setInputDatetime(i) {
+export function setInputDatetime(i, prefix) {
+    i.style.width = "225px";
     let bar = document.createElement('input');
     bar.type = "text";
     bar.classList.add("input");
@@ -97,7 +99,7 @@ export function setInputDatetime(i) {
     //bar.style.position = "relative";
     const opitons = {
         "appendTo": i,
-        "autoClose": true,
+        "autoClose": false,
         "autoHideOnBlur": true,
         "autoHideOnClick": true,
         "date": true,
@@ -112,8 +114,13 @@ export function setInputDatetime(i) {
         "monthsInCalendar": 1,
         "required": false,
         "strictParse": false,
-        /*"styles": {
-            "back": "rd-back",
+        "styles": {
+            "selectedDay": "has-background-light",
+            "dayBodyElem": "has-text-weight-normal",
+            "timeOption": "has-text-weight-normal",
+            "selectedTime": "rd-time-selected has-text-weight-normal",
+            "dayTable": "table is-bordered"
+            /*"back": "rd-back",
             "container": "rd-container",
             "date": "rd-date",
             "dayBody": "rd-days-body",
@@ -131,8 +138,8 @@ export function setInputDatetime(i) {
             "selectedTime": "rd-time-selected",
             "time": "rd-time",
             "timeList": "rd-time-list",
-            "timeOption": "rd-time-option"
-        },*/
+            "timeOption": "rd-time-option"*/
+        },
         "time": true,
         "timeFormat": "HH:mm:ss",
         "timeInterval": 1800,
@@ -140,7 +147,6 @@ export function setInputDatetime(i) {
         "weekdayFormat": "short",
         "weekStart": 1
     };
-    //console.log(bar.getBoundingClientRect());
-    rome(bar, opitons);//.container.style.top = "0px !important";// = "position: absolute; left: 0; top: 0;";
+    rome(bar, opitons);
     return bar;
 }

@@ -1,8 +1,6 @@
 import { addNewApplication, createApplication } from '../../application.js';
 import { main } from '../../main.js';
 import { showApplicationsList } from '../../ui.js';
-import { applicationTable } from '../../tables-poperties.js';
-
 export class AddApplicationComponent {
     constructor(parent, isDisplay, properties) {
         this.parent = parent;
@@ -10,19 +8,16 @@ export class AddApplicationComponent {
         this.properties = properties;
     }
 
-    async newApplicationOnClick(getters, inputs) {
-        /*const description = document.getElementById('add-description').value;
-        const dueTime = document.getElementById('add-due_time').value;*/
+    async newApplicationOnClick(inputs, properties) {
         let input = [];
-        for (let i = 0; i < getters.length; ++i) {
-            let tmp = getters[i](inputs[i]);
+        for (let i = 0; i < properties.getters.length; ++i) {
+            let tmp = properties.getters[i](inputs[i]);
             if (tmp === null) return;
             input.push(tmp);
         }
         const application = await createApplication(input[0], input[1], input[2], main.universalId);
-        //const application = await createApplication(description, false, dueTime, main.universalId);
         const application_id = await addNewApplication(application);
-        await showApplicationsList(main.universalId, applicationTable.exclude, applicationTable.include, applicationTable.types, applicationTable.fields);
+        await showApplicationsList(main.universalId, properties.exclude, properties.include, properties.types, properties.fields, properties.setters, properties.getters);
     }
 
     getHTML() {
@@ -65,7 +60,7 @@ export class AddApplicationComponent {
             let fieldList = document.createElement('form');
             fieldList.id = "add-application-form";
             //fieldList.classList.add("box");
-            fieldList.style = "display: table-caption;";
+            //fieldList.style = "display: table-caption;";
             let addLabel = document.createElement('label');
             addLabel.classList.add("label");
             addLabel.innerHTML = "Новое заявление";
@@ -81,7 +76,7 @@ export class AddApplicationComponent {
                 let control = document.createElement('div');
                 control.classList.add("control");
                 control.name = `${i}`;
-                let input = this.properties.setters[i](control, this.properties.types);
+                let input = this.properties.setters[i](control, "add");
                 inputs.push(input);
                 control.appendChild(input);
                 field.appendChild(label);
@@ -98,54 +93,7 @@ export class AddApplicationComponent {
             applicationDiv.appendChild(fieldList);
             this.root.appendChild(applicationDiv);
             this.parent.body.appendChild(this.root);
-            //this.newApplication = document.getElementById('new-application');
-            /*this.newApplication*/add.onclick = this.newApplicationOnClick.bind(this.newApplication, this.properties.getters, inputs);
-            /*const opitons = {
-                "appendTo": document.getElementById('datetime-input'),
-                "autoClose": true,
-                "autoHideOnBlur": true,
-                "autoHideOnClick": true,
-                "date": true,
-                "dateValidator": Function.prototype,
-                "dayFormat": "DD",
-                "initialValue": null,
-                "inputFormat": "DD/MM/YYYY, HH:mm:ss",
-                "invalidate": true,
-                "max": null,
-                "min": null,
-                "monthFormat": "MMMM YYYY",
-                "monthsInCalendar": 1,
-                "required": false,
-                "strictParse": false,
-                "styles": {
-                    "back": "rd-back",
-                    "container": "rd-container",
-                    "date": "rd-date",
-                    "dayBody": "rd-days-body",
-                    "dayBodyElem": "rd-day-body",
-                    "dayConcealed": "rd-day-concealed",
-                    "dayDisabled": "rd-day-disabled",
-                    "dayHead": "rd-days-head",
-                    "dayHeadElem": "rd-day-head",
-                    "dayRow": "rd-days-row",
-                    "dayTable": "rd-days",
-                    "month": "rd-month",
-                    "next": "rd-next",
-                    "positioned": "rd-container-attachment",
-                    "selectedDay": "rd-day-selected",
-                    "selectedTime": "rd-time-selected",
-                    "time": "rd-time",
-                    "timeList": "rd-time-list",
-                    "timeOption": "rd-time-option"
-                },
-                "time": true,
-                "timeFormat": "HH:mm:ss",
-                "timeInterval": 1800,
-                "timeValidator": Function.prototype,
-                "weekdayFormat": "short",
-                "weekStart": 1
-            }
-            rome(document.getElementById("add-due_time"), opitons);*/
+            add.onclick = this.newApplicationOnClick.bind(this.newApplication, inputs, this.properties);
         }
     }
 }

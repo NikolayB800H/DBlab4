@@ -1,5 +1,4 @@
 import { getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
-import { boolType } from "./tables-poperties.js";
 
 export function setElementVisible(element, visible) {
     for (let i = 0; i < element.length; i++) {
@@ -9,7 +8,7 @@ export function setElementVisible(element, visible) {
     element[0].parent.render()
 }
 
-export async function showApplicationsList(clientId, exclude, include, types, fields) {
+export async function showApplicationsList(clientId, exclude, include, types, fields, setters, getters) {
     let activeCol = null;
     let activeSearch = null;
     let sortWay = "";
@@ -25,6 +24,9 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
     let rowsPerPage = 6;
     let pageNow = 1;
     let pageBtns = [];
+    let blockChoice = false;
+    let matrix = null;
+    let undoChange = [];
     const applicationsList = document.getElementById('applicationsList');
     const applicationsHeader = document.getElementById('applicationsHeader');
     const paginationList = document.getElementById('pagination-list');
@@ -97,7 +99,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         } else {
             paginationPrev.classList.remove("is-disabled");
         }
-        if (pageNow === pagesCount) {
+        if (pageNow >= pagesCount) {
             paginationNext.classList.add("is-disabled");
         } else {
             paginationNext.classList.remove("is-disabled");
@@ -105,10 +107,12 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
 
         recordCounter = 0;
         let applicationNode = applicationsList.firstChild;
+        matrix = [];
         for (const application of applications) {
             //console.log(application);
             let elemTd = applicationNode.firstChild;
             let counter = 0;
+            let matrixRow = [];
             for (let [key, val] of Object.entries(application)) {
                 if (!exclude.includes(key)) {
                     if (types[counter] == "datetime") {
@@ -116,6 +120,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
                     }
                     const elem = elemTd.firstChild;
                     elem.innerHTML = `${val}`;
+                    matrixRow.push(elem);
                     /*let updater = document.createElement('a');
                     updater.innerHTML = "⠀";
                     elem.appendChild(updater);
@@ -124,6 +129,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
                     ++counter;
                 }
             }
+            matrix.push(matrixRow);
             
             const rowButtons = document.createElement('div');
             rowButtons.id = `row-buttons-${recordCounter}`;
@@ -139,17 +145,19 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
             deleteButton.style = "margin-left: 6px";
             deleteButton.classList.add("button");
             deleteButton.classList.add("is-dark");
-            deleteButton.onclick = deleteClicked
 
             const editButton = document.createElement('button');
             editButton.textContent = "✎";
             editButton.title = "Изменить запись";
-            editButton.id = "delete-" + recordCounter;
+            editButton.name = application.id;
+            editButton.id = `edit-${recordCounter}`;
             editButton.type = "button";
             editButton.style = "margin-left: 6px";
             editButton.classList.add("button");
             editButton.classList.add("is-dark");
-            editButton.onclick = logclick.bind(editButton, `edit-${recordCounter}`);
+
+            deleteButton.onclick = deleteClicked.bind(deleteButton, editButton, deleteButton);
+            editButton.onclick = logclick.bind(editButton, editButton, deleteButton);
 
             rowButtons.insertBefore(deleteButton, rowButtons.lastChild);
             rowButtons.insertBefore(editButton, deleteButton);
@@ -190,23 +198,53 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         }
         if (pageBtns.length > 0) pageBtns[pageNow - 1].classList.add("is-dark");
         //console.log("done");
-        }, 50);
+        }, 100);
     }
 
-    async function deleteClicked(e) {
-        const applicationId = parseInt(e.target.name);
-        await removeApplication(applicationId);
-        await loadList();
+    function exitChange(num, editBtn, deleteBtn) {
+        editBtn.textContent = "✎";
+        editBtn.title = "Изменить запись";
+        deleteBtn.textContent = "✖";
+        deleteBtn.title = "Удалить запись";
+        blockChoice = false;
+        matrix[num].forEach(element => {
+            element.removeChild(element.lastChild);
+        });
+    }
+
+    async function deleteClicked(editBtn, deleteBtn) {
+        if (matrix === null) return;
+        let num = parseInt(editBtn.id.split('-')[1]);
+        if (isNaN(num)) return;
+        if (matrix[num] === null) return;
+        switch(deleteBtn.textContent) {
+            case "✖":
+                const applicationId = parseInt(deleteBtn.name);
+                await removeApplication(applicationId);
+                await loadList();
+                break;
+            case "🚫":
+                console.log("Cancel-test");
+                for (let i = 0; i < types.length; ++i) {
+                    matrix[num][i].firstChild.nodeValue = undoChange[i];
+                }
+                exitChange(num, editBtn, deleteBtn);
+                break;
+            default:
+                console.log("Bad delete!");
+        }
         //await showApplicationsList(clientId, exclude, include, types, fields);
     }
 
     function login(num) {
+        if (blockChoice) return;
         //num.classList.remove("is-hidden");
         num.style.visibility = "visible";
         searchBarUpdate();
     }
 
     function logout(num) {
+        if (blockChoice) return;
         if (num.id != activeCol) {
             //num.classList.add("is-hidden");
             num.style.visibility = "hidden";
@@ -214,96 +252,100 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         }
     }
 
-    function logclick(num) {
-        console.log(num)
+    function changeClick(i) {
+        i.blur()
+        let changeValue = getters[i.name](i);
+        if (changeValue === null) return;
+        i.parentNode.parentNode.firstChild.nodeValue = changeValue;
+        //i.parentNode.parentNode.replaceChild(document.createTextNode(changeValue), i.parentNode.parentNode.firstChild);
+    }
+
+    async function saveChanges(id, values) {
+        console.log(`New values: ${values[0]}, ${values[1]}, ${values[2]} at ${id}`);
+    }
+
+    function logclick(editBtn, deleteBtn) {
+        if (matrix === null) return;
+        let num = parseInt(editBtn.id.split('-')[1]);
+        if (isNaN(num)) return;
+        if (matrix[num] === null) return;
+        switch(editBtn.textContent) {
+            case "✎":
+                console.log("Change-test");
+                editBtn.textContent = "✅";
+                editBtn.title = "Сохранить изменения";
+                deleteBtn.textContent = "🚫";
+                deleteBtn.title = "Отменить изменения";
+                blockChoice = true;
+                undoChange = [];
+                for (let i = 0; i < types.length; ++i) {
+                    undoChange.push(matrix[num][i].firstChild.nodeValue);
+                    barShow(i, matrix[num], matrix[num], "change", changeClick);
+                }
+                break;
+            case "✅":
+                console.log("Save-changes-test");
+                let toSave = [];
+                matrix[num].forEach(element => {
+                    toSave.push(element.firstChild.nodeValue);
+                });
+                saveChanges(editBtn.name, toSave);
+                exitChange(num, editBtn, deleteBtn);
+                break;
+            default:
+                console.log("Bad change!");
+        }
     }
 
     async function butClick(i) {
         i.blur()
+        searchValue = getters[i.name](i);
+        if (searchValue === null) return;
         switch(types[i.name]) {
             case "string":
-                searchValue = "LIKE '"+i.value+"%'";
+                searchValue = `LIKE '${searchValue}%'`;
                 break;
             case "bool":
-                //searchValue = "= "+i.value.toUpperCase()+"";
-                let valu = document.querySelector('input[name="bar-choice"]:checked');
-                if (valu === null) {
-                    searchValue = "";
-                } else {
-                    searchValue = `= ${valu.value.toUpperCase()}`;
-                }
+                searchValue = "= " + `${searchValue}`.toUpperCase();
+                break;
+            case "datetime":
+                searchValue = searchValue.split(',');
+                searchValue[0] = searchValue[0].split('/').reverse().join('-');
+                searchValue = searchValue.join('');
+                searchValue = `= '${searchValue}'`;
                 break;
             default:
+                console.log("Bad search type!")
                 searchValue = "";
         }
         pageNow = 1;
         await loadList();
     }
 
-    function serchBarShow(num) {
+    function barShow(num, line, inlineBtns, prefix, eventClick) {
+        console.log(num);
         let i = document.createElement('div');
-        i.id = "search-bar";
+        i.id = `${prefix}-bar`;
         i.name = num;
         i.classList.add("card");
         i.style = "padding: 0px !important; height: 26px; width:240px";
-        let bar;
+        let bar = setters[i.name](i, prefix);
+        bar.style = "margin-left: 6px;";
         switch(types[i.name]) {
             case "string":
-                i.style.width = "225px";
-                bar = document.createElement('input');
-                bar.type = "text";
-                bar.name = num;
-                bar.style = "margin-left: 6px; padding: 0px !important; height: 26px; display: inline-block;";
+                bar.classList.remove("input");
+                bar.style.height = "26px !important";
+                bar.style.display = "inline-block !important";
                 break;
             case "bool":
-                bar = document.createElement('div');
-                bar.name = num;
-                bar.style = "margin-left: 6px;";
-
-                let len = 0;
-                boolType.forEach(element => {
-                    len += element.length + 1.8;
-
-                    let varBut = document.createElement('input');
-                    varBut.type = "radio";
-                    varBut.id = `radio-${num}-${element}`;
-                    varBut.name = "bar-choice";
-                    varBut.value = element;
-                    bar.appendChild(varBut);
-
-                    let varButLabel = document.createElement('label');
-                    varButLabel.for = "bar-choice";
-                    varButLabel.textContent = element;
-                    bar.appendChild(varButLabel);
-                });
-                i.style.width = 48 + 8 * len + "px";
-                /*
-                let trueBut = document.createElement('input');
-                trueBut.type = "radio";
-                trueBut.id = `radio-${num.name}-true`;
-                trueBut.name = "bar-choice";
-                trueBut.value = "true";
-                bar.appendChild(trueBut);
-
-                let trueButLabel = document.createElement('label');
-                trueButLabel.for = "bar-choice";
-                trueButLabel.textContent = "true";
-                bar.appendChild(trueButLabel);
-
-                let falseBut = document.createElement('input');
-                falseBut.type = "radio";
-                falseBut.id = `radio-${num.name}-false`;
-                falseBut.name = "bar-choice";
-                falseBut.value = "false";
-                bar.appendChild(falseBut);
-
-                let falseButLabel = document.createElement('label');
-                falseButLabel.for = "bar-choice";
-                falseButLabel.textContent = "false";
-                bar.appendChild(falseButLabel);*/
+                break;
+            case "datetime":
+                bar.classList.remove("input");
+                bar.style.height = "26px !important";
+                bar.style.display = "inline-block !important";
                 break;
             default:
-                console.log("Bad type!");
+                console.log("Bad bar2 type!");
         }
         let but = document.createElement('button');
         but.type = "button";
@@ -313,34 +355,19 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         but.classList.add("button");
         but.classList.add("is-rounded");
         but.classList.add("is-dark");
-        but.onclick = butClick.bind(but, bar);
+        but.onclick = eventClick.bind(but, bar);
         i.appendChild(bar);
         i.appendChild(but);
-
-        i.style.position = 'absolute';
-        i.style.left = searches[num].offsetLeft + 'px';
-        i.style.top = searches[num].offsetTop + 24 + 'px';
-        
-        cols[num].appendChild(i);
-        searchBar = i;
-        searchBarParent = cols[num];
-        /*i.addEventListener("keyup", ({key}) => {
-            if (key === "Enter") {
-                //console.log("search"+i.value)
-                i.blur()
-                switch(types[i.name]) {
-                    case "string":
-                        searchValue = "LIKE '"+i.value+"%'";
-                        break;
-                    case "bool":
-                        searchValue = "= "+i.value.toUpperCase()+"";
-                        break;
-                    default:
-                        searchValue = "";
-                }
-                loadList();
-            }
-        })*/
+        i.style.left = inlineBtns[num].offsetLeft + 'px';
+        i.style.top = inlineBtns[num].offsetTop + 24 + 'px';
+        line[num].appendChild(i);
+        if (prefix == "search") {
+            i.style.position = 'absolute';
+            searchBar = i;
+            searchBarParent = line[num];
+        } else if (prefix == "change") {
+            i.style.top = inlineBtns[num].offsetTop - 6 + 'px';
+        }
     }
 
     function serchBarRemove() {
@@ -367,7 +394,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
                 let toDo = false;
                 if (activeSearch !== null & searchValue != "" & tmp !== activeSearch) {
                     searchValue = "";
-                    activeSearch = null;
+                    //activeSearch = null;
                     toDo = true;
                 }
                 activeSearch = tmp;
@@ -391,7 +418,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
                     }
                 }
                 serchBarRemove();
-                serchBarShow(num.name);
+                barShow(num.name, cols, searches, "search", butClick);
                 break;
             default:
                 activeSearch = null;

@@ -43,6 +43,6 @@ export class ApplicationsPage {
         this.headerComponent.render();
         this.addApplicationComponent.render();
         this.tableApplicationsComponent.render();
-        showApplicationsList(main.user, applicationTable.exclude, applicationTable.include, applicationTable.types, applicationTable.fields);
+        showApplicationsList(main.user, applicationTable.exclude, applicationTable.include, applicationTable.types, applicationTable.fields, applicationTable.setters, applicationTable.getters);
     }
 }
