@@ -1,8 +1,6 @@
 import { HeaderComponent } from "../../components/header/index.js";
 import { TableComponent } from "../../components/table/index.js";
 import { AddApplicationComponent } from "../../components/add-application/index.js";
-import { main } from "../../main.js";
-import { showContentList } from "../../ui.js";
 import { applicationTable } from "../../tables-poperties.js";
 
 export class ApplicationsPage {
@@ -44,6 +42,5 @@ export class ApplicationsPage {
         this.headerComponent.render();
         this.addApplicationComponent.render();
         this.tableComponent.render();
-        showContentList([main.user], applicationTable);
     }
 }

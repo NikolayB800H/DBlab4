@@ -1,3 +1,6 @@
+import { main } from "../../main.js";
+import { showContentList } from "../../ui.js";
+
 export class TableComponent {
     constructor(parent, isDisplay, properties) {
         this.parent = parent;
@@ -38,6 +41,7 @@ export class TableComponent {
         if (this.isDisplay) {
             const html = this.getHTML()
             this.parent.body.insertAdjacentHTML('beforeend', html)
+            showContentList([main.user], this.properties);
         }
     }
 }
