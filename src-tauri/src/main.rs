@@ -21,6 +21,7 @@ async fn main() {
     tauri::Builder::default()
         .manage(connections) // Makes connection pool available in all #[tauri::command]
         .invoke_handler(tauri::generate_handler![
+            change_application,
             create_application,
             create_user,
             create_client,

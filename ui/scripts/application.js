@@ -1,5 +1,9 @@
 const { invoke } = window.__TAURI__.tauri;
 
+export function changeApplication(applicationId, description, isDone, dueTime) {
+    return invoke('change_application', { applicationId, description, isDone, dueTime });
+}
+
 export function createApplication(description, isDone, dueTime, createdBy) {
     const application = invoke('create_application', { description, done: isDone, dueTime, createdBy });
     return application;

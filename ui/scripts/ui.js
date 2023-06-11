@@ -1,4 +1,5 @@
-import { getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
+import { changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
+import { fromUserString, fromUserBool, fromUserDatetime } from "./tables-poperties.js";
 
 export function setElementVisible(element, visible) {
     for (let i = 0; i < element.length; i++) {
@@ -8,7 +9,7 @@ export function setElementVisible(element, visible) {
     element[0].parent.render()
 }
 
-export async function showApplicationsList(clientId, exclude, include, types, fields, setters, getters) {
+export async function showContentList(clientId, properties) {
     let activeCol = null;
     let activeSearch = null;
     let sortWay = "";
@@ -36,16 +37,10 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         return;
     }
     applicationsHeader.replaceChildren();
-    
-    /*async function checkboxChanged(e) {
-        const applicationId = parseInt(e.target.name);
 
-        await setApplicationDone(applicationId, e.target.checked);
-        await showApplicationsList(clientId, exclude, include, types);
-    }*/
     async function loadList() {
-        let searchCol = (activeSearch === null || searchValue == "") ? "" : fields[activeSearch];
-        let sortCol = (activeSort === null) ? "" : fields[activeSort];
+        let searchCol = (activeSearch === null || searchValue == "") ? "" : properties.fields[activeSearch];
+        let sortCol = (activeSort === null) ? "" : properties.fields[activeSort];
         let recordCounter = 0;
         let recordPrevElem;
         applicationsList.replaceChildren();
@@ -53,7 +48,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
             const applicationNode = document.createElement('tr');
             let counter = 0;
             let prevElemTd;
-            for (let i in include) {
+            for (let i in properties.include) {
                 const elemTd = document.createElement('td');
                 const elem = document.createElement('div');
                 elem.innerHTML = "⠀";
@@ -109,13 +104,12 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         let applicationNode = applicationsList.firstChild;
         matrix = [];
         for (const application of applications) {
-            //console.log(application);
             let elemTd = applicationNode.firstChild;
             let counter = 0;
             let matrixRow = [];
             for (let [key, val] of Object.entries(application)) {
-                if (!exclude.includes(key)) {
-                    if (types[counter] == "datetime") {
+                if (!properties.exclude.includes(key)) {
+                    if (properties.types[counter] == "datetime") {
                         val = (new Date(val).toLocaleString('en-GB', {timeZone:'UTC'}));
                     }
                     const elem = elemTd.firstChild;
@@ -197,7 +191,6 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
             paginationList.appendChild(pageNode);
         }
         if (pageBtns.length > 0) pageBtns[pageNow - 1].classList.add("is-dark");
-        //console.log("done");
         }, 100);
     }
 
@@ -224,8 +217,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
                 await loadList();
                 break;
             case "🚫":
-                console.log("Cancel-test");
-                for (let i = 0; i < types.length; ++i) {
+                for (let i = 0; i < properties.types.length; ++i) {
                     matrix[num][i].firstChild.nodeValue = undoChange[i];
                 }
                 exitChange(num, editBtn, deleteBtn);
@@ -233,12 +225,10 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
             default:
                 console.log("Bad delete!");
         }
-        //await showApplicationsList(clientId, exclude, include, types, fields);
     }
 
     function login(num) {
         if (blockChoice) return;
-        //num.classList.remove("is-hidden");
         num.style.visibility = "visible";
         searchBarUpdate();
     }
@@ -254,14 +244,13 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
 
     function changeClick(i) {
         i.blur()
-        let changeValue = getters[i.name](i);
+        let changeValue = properties.getters[i.name](i);
         if (changeValue === null) return;
         i.parentNode.parentNode.firstChild.nodeValue = changeValue;
-        //i.parentNode.parentNode.replaceChild(document.createTextNode(changeValue), i.parentNode.parentNode.firstChild);
     }
 
     async function saveChanges(id, values) {
-        console.log(`New values: ${values[0]}, ${values[1]}, ${values[2]} at ${id}`);
+        const changedId = await changeApplication(id, fromUserString(values[0]), fromUserBool(values[1]), fromUserDatetime(values[2]));
     }
 
     function logclick(editBtn, deleteBtn) {
@@ -271,25 +260,23 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         if (matrix[num] === null) return;
         switch(editBtn.textContent) {
             case "✎":
-                console.log("Change-test");
                 editBtn.textContent = "✅";
                 editBtn.title = "Сохранить изменения";
                 deleteBtn.textContent = "🚫";
                 deleteBtn.title = "Отменить изменения";
                 blockChoice = true;
                 undoChange = [];
-                for (let i = 0; i < types.length; ++i) {
+                for (let i = 0; i < properties.types.length; ++i) {
                     undoChange.push(matrix[num][i].firstChild.nodeValue);
                     barShow(i, matrix[num], matrix[num], "change", changeClick);
                 }
                 break;
             case "✅":
-                console.log("Save-changes-test");
                 let toSave = [];
                 matrix[num].forEach(element => {
                     toSave.push(element.firstChild.nodeValue);
                 });
-                saveChanges(editBtn.name, toSave);
+                saveChanges(parseInt(editBtn.name), toSave);
                 exitChange(num, editBtn, deleteBtn);
                 break;
             default:
@@ -299,20 +286,17 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
 
     async function butClick(i) {
         i.blur()
-        searchValue = getters[i.name](i);
+        searchValue = properties.getters[i.name](i);
         if (searchValue === null) return;
-        switch(types[i.name]) {
+        switch(properties.types[i.name]) {
             case "string":
-                searchValue = `LIKE '${searchValue}%'`;
+                searchValue = `LIKE ${fromUserString(searchValue).replace(/.$/, "%")}'`;
                 break;
             case "bool":
-                searchValue = "= " + `${searchValue}`.toUpperCase();
+                searchValue = `= ${fromUserBool(searchValue)}`;
                 break;
             case "datetime":
-                searchValue = searchValue.split(',');
-                searchValue[0] = searchValue[0].split('/').reverse().join('-');
-                searchValue = searchValue.join('');
-                searchValue = `= '${searchValue}'`;
+                searchValue = `= ${fromUserDatetime(searchValue)}`;
                 break;
             default:
                 console.log("Bad search type!")
@@ -323,15 +307,14 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
     }
 
     function barShow(num, line, inlineBtns, prefix, eventClick) {
-        console.log(num);
         let i = document.createElement('div');
         i.id = `${prefix}-bar`;
         i.name = num;
         i.classList.add("card");
         i.style = "padding: 0px !important; height: 26px; width:240px";
-        let bar = setters[i.name](i, prefix);
+        let bar = properties.setters[i.name](i, prefix);
         bar.style = "margin-left: 6px;";
-        switch(types[i.name]) {
+        switch(properties.types[i.name]) {
             case "string":
                 bar.classList.remove("input");
                 bar.style.height = "26px !important";
@@ -433,7 +416,6 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
                     await loadList();
                 }
         }
-        //console.log(`do search by${activeSearch} with sort by${activeSort} ${sortWay}`);
     }
 
     async function sortClick(num) {
@@ -474,12 +456,10 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
                     if (i != num.name) {
                         sorts[i].textContent = "•";
                         searches[i].textContent = "🔍";
-                        //cols[i].classList.add("is-hidden");
                         cols[i].style.visibility = "hidden";
                     }
                 }
         }
-        //console.log(`do search by${activeSearch} with sort by${activeSort} ${sortWay}`);
     }
 
     paginationPrev.addEventListener("click", async function (event) {
@@ -495,7 +475,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
 
     let counterTh = 0;
     let prevElemTh;
-    include.forEach(element => {
+    properties.include.forEach(element => {
         const elemTh = document.createElement('th');
         elemTh.innerHTML = element;
         const colButtons = document.createElement('div');
@@ -506,7 +486,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         const sortButton = document.createElement('button');
         sortButton.textContent = "•";
         sortButton.title = "Сортировка";
-        sortButton.id = `sort-${include[counterTh]}`;
+        sortButton.id = `sort-${properties.include[counterTh]}`;
         sortButton.name = `${counterTh}`;
         sortButton.type = "button";
         sortButton.style = "width: 36px; height: 24px; margin-left: 6px"
@@ -519,7 +499,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
         const searchButton = document.createElement('button');
         searchButton.textContent = "🔍";
         searchButton.title = "Поиск";
-        searchButton.id = `search-${include[counterTh]}`;
+        searchButton.id = `search-${properties.include[counterTh]}`;
         searchButton.name = `${counterTh}`;
         searchButton.type = "button";
         searchButton.style = "width: 36px; height: 24px; margin-left: 6px"

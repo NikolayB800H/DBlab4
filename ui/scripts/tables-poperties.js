@@ -6,19 +6,23 @@ class TableProperties {
         this.fields = fields;
         this.setters = [];
         this.getters = [];
+        this.froms = [];
         this.types.forEach(element => {
             switch (element) {
                 case "string":
                     this.setters.push(setInputString);
                     this.getters.push(getInputString);
+                    this.froms.push(fromUserString);
                     break;
                 case "bool":
                     this.setters.push(setInputBool);
                     this.getters.push(getInputBool);
+                    this.froms.push(fromUserBool);
                     break;
                 case "datetime":
                     this.setters.push(setInputDatetime);
                     this.getters.push(getInputDatetime);
+                    this.froms.push(fromUserDatetime);
                     break;
                 default:
                     console.log(`Bad type property: ${element}`);
@@ -35,6 +39,20 @@ export const applicationTable = new TableProperties(
     ["string", "bool", "datetime"],
     ["description", "done", "due_time"]
 );
+
+export function fromUserString(str) {
+    return `'${str}'`;
+}
+
+export function fromUserBool(str) {
+    return `${str}`.toUpperCase();
+}
+
+export function fromUserDatetime(str) {
+    str = str.split(',');
+    str[0] = str[0].split('/').reverse().join('-');
+    return `'${str.join('')}'`;
+}
 
 export function getInputString(i) {
     if (i.value == "") return null;

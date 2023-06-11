@@ -1,6 +1,6 @@
 import { addNewApplication, createApplication } from '../../application.js';
 import { main } from '../../main.js';
-import { showApplicationsList } from '../../ui.js';
+import { showContentList } from '../../ui.js';
 export class AddApplicationComponent {
     constructor(parent, isDisplay, properties) {
         this.parent = parent;
@@ -17,7 +17,7 @@ export class AddApplicationComponent {
         }
         const application = await createApplication(input[0], input[1], input[2], main.universalId);
         const application_id = await addNewApplication(application);
-        await showApplicationsList(main.universalId, properties.exclude, properties.include, properties.types, properties.fields, properties.setters, properties.getters);
+        await showContentList(main.universalId, properties);
     }
 
     getHTML() {

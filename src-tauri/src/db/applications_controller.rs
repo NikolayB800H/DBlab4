@@ -7,7 +7,43 @@ pub struct MyI64 {
     pub value: Option<i64>
 }
 
+#[derive(Debug, Clone, Serialize, FromRow)]
+pub struct MyI64cringe {
+    pub id: Option<i64>
+}
+
+#[derive(Debug, Clone, Serialize, sqlx::FromRow, sqlx::Type)]
+pub struct MyU64 {
+    pub value: Option<i64>
+}
+
 use crate::model::application::{dao::application_entity::ApplicationEntity, application::Application};
+
+pub async fn change_application(
+    pool: &PgPool,
+    application_id: i64,
+    description: String,
+    done: String,
+    due_time: String
+) -> Result<i64, sqlx::Error> {
+    let query = format!(
+        r#"
+        UPDATE applications
+        SET description = {}, done = {}, due_time = {}
+        WHERE id = {}
+        RETURNING applications.id
+        "#,
+        description,
+        done,
+        due_time,
+        application_id
+    );
+    let count = sqlx::query_as::<sqlx::Postgres, MyI64cringe>(&query)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(count.id.unwrap())
+}
 
 pub async fn get_client_applications_count(
     pool: &PgPool,
@@ -30,21 +66,8 @@ pub async fn get_client_applications_count(
     let count = sqlx::query_as::<sqlx::Postgres, MyI64>(&query)
     .fetch_one(pool)
     .await?;
-    Ok(count.value.unwrap())
-    /*
-    let count = sqlx::query_as!(
-        MyI64,
-        r#"
-        SELECT COUNT(*) as value
-        FROM applications
-        WHERE created_by = $1
-        "#,
-        created_by
-    )
-    .fetch_one(pool)
-    .await?;
 
-    Ok(count.value.unwrap())*/
+    Ok(count.value.unwrap())
 }
 
 pub async fn get_all_applications(pool: &PgPool) -> Result<Vec<Application>, sqlx::Error> {
@@ -61,7 +84,7 @@ pub async fn get_all_applications(pool: &PgPool) -> Result<Vec<Application>, sql
 
     Ok(application_entities.into_iter().map(Application::from).collect())
 }
-//SELECT * FROM applications WHERE created_by = 3 AND description LIKE 'application_5%' ORDER BY id;
+
 pub async fn get_client_applications(
     pool: &PgPool,
     client_id: i64,
@@ -74,7 +97,6 @@ pub async fn get_client_applications(
 ) -> Result<Vec<Application>, sqlx::Error> {
     let second_ = format!(r#"AND {} {}"#, search_col, search_value);
     let third_ = format!(r#"ORDER BY {} {}"#, sort_col, sort_way);
-    //println!("{}", second_);
     let second: &str = &second_[..];
     let third: &str = &third_[..];
     let query = format!(

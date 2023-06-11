@@ -2,7 +2,7 @@ import { HeaderComponent } from "../../components/header/index.js";
 import { TableApplicationsComponent } from "../../components/table-applications/index.js";
 import { AddApplicationComponent } from "../../components/add-application/index.js";
 import { main } from "../../main.js";
-import { showApplicationsList } from "../../ui.js";
+import { showContentList } from "../../ui.js";
 import { applicationTable } from "../../tables-poperties.js";
 
 export class ApplicationsPage {
@@ -43,6 +43,6 @@ export class ApplicationsPage {
         this.headerComponent.render();
         this.addApplicationComponent.render();
         this.tableApplicationsComponent.render();
-        showApplicationsList(main.user, applicationTable.exclude, applicationTable.include, applicationTable.types, applicationTable.fields, applicationTable.setters, applicationTable.getters);
+        showContentList(main.user, applicationTable);
     }
 }

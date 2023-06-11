@@ -7,7 +7,27 @@ use crate::{
 };
 
 #[tauri::command]
-pub fn create_application(description: String, done: bool, due_time: String, created_by: i64) -> Application {
+pub async fn change_application<'r>(
+    application_id: i64,
+    description: String,
+    is_done: String,
+    due_time: String,
+    connection: State<'r, DbConnectionPool>
+) -> Result<i64, String> {
+    let pool = &*connection.connection.lock().await;
+    let row_affected = applications_controller::change_application(pool, application_id, description, is_done, due_time)
+        .await
+        .map_err(|e| format!("DB error: {}", e))?;
+    Ok(row_affected)
+}
+
+#[tauri::command]
+pub fn create_application(
+    description: String,
+    done: bool,
+    due_time: String,
+    created_by: i64
+) -> Application {
     let due_time = DateTime::from_utc(
         NaiveDateTime::parse_from_str(&due_time, "%d/%m/%Y, %H:%M:%S").unwrap(),
         Utc,
