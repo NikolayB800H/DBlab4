@@ -42,7 +42,6 @@ export function getInputString(i) {
 }
 
 export function getInputBool(i) {
-    console.log(i)
     let valu = document.querySelector(`input[name="${i.firstChild.name}"]:checked`);
     if (valu === null) {
         return null;
@@ -61,14 +60,15 @@ export function setInputString(i) {
     bar.type = "text";
     bar.classList.add("input");
     bar.name = i.name;
-    bar.style = "margin-left: 6px; padding: 0px !important; height: 26px; display: inline-block;";
+    bar.placeholder = "...";
+    //bar.style = "margin-left: 6px; padding: 0px !important; height: 26px; display: inline-block;";
     return bar;
 }
 
 export function setInputBool(i) {
     let bar = document.createElement('div');
     bar.name = i.name;
-    bar.style = "margin-left: 6px;";
+    //bar.style = "margin-left: 6px;";
     let len = 0;
     boolType.forEach(element => {
         len += element.length + 1.8;
@@ -83,7 +83,7 @@ export function setInputBool(i) {
         varButLabel.textContent = element;
         bar.appendChild(varButLabel);
     });
-    i.style.width = 48 + 8 * len + "px";
+    //i.style.width = 48 + 8 * len + "px";
     return bar;
 }
 
@@ -93,6 +93,7 @@ export function setInputDatetime(i) {
     bar.classList.add("input");
     bar.name = i.name;
     bar.readOnly = true;
+    bar.placeholder = "...";
     //bar.style.position = "relative";
     const opitons = {
         "appendTo": i,
@@ -111,7 +112,7 @@ export function setInputDatetime(i) {
         "monthsInCalendar": 1,
         "required": false,
         "strictParse": false,
-        "styles": {
+        /*"styles": {
             "back": "rd-back",
             "container": "rd-container",
             "date": "rd-date",
@@ -131,7 +132,7 @@ export function setInputDatetime(i) {
             "time": "rd-time",
             "timeList": "rd-time-list",
             "timeOption": "rd-time-option"
-        },
+        },*/
         "time": true,
         "timeFormat": "HH:mm:ss",
         "timeInterval": 1800,
@@ -139,6 +140,7 @@ export function setInputDatetime(i) {
         "weekdayFormat": "short",
         "weekStart": 1
     };
-    rome(bar, opitons).container.style.top = "0px !important";// = "position: absolute; left: 0; top: 0;";
+    //console.log(bar.getBoundingClientRect());
+    rome(bar, opitons);//.container.style.top = "0px !important";// = "position: absolute; left: 0; top: 0;";
     return bar;
 }

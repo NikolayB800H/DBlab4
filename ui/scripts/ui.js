@@ -188,7 +188,7 @@ export async function showApplicationsList(clientId, exclude, include, types, fi
             pageNode.appendChild(pageBtn);
             paginationList.appendChild(pageNode);
         }
-        pageBtns[pageNow - 1].classList.add("is-dark");
+        if (pageBtns.length > 0) pageBtns[pageNow - 1].classList.add("is-dark");
         //console.log("done");
         }, 50);
     }
