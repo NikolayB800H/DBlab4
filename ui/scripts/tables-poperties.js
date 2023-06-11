@@ -1,5 +1,7 @@
+import { changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
+
 class TableProperties {
-    constructor(include, exclude, types, fields) {
+    constructor(include, exclude, types, fields, changer, loader, remover, counter, listId, headerId) {
         this.include = include;
         this.exclude = exclude;
         this.types = types;
@@ -7,6 +9,12 @@ class TableProperties {
         this.setters = [];
         this.getters = [];
         this.froms = [];
+        this.changer = changer;
+        this.loader = loader;
+        this.remover = remover;
+        this.counter = counter;
+        this.listId = listId;
+        this.headerId = headerId;
         this.types.forEach(element => {
             switch (element) {
                 case "string":
@@ -37,7 +45,13 @@ export const applicationTable = new TableProperties(
     ["Содержание", "Выполнено", "Дедлайн"],
     ["id", "created_by"],
     ["string", "bool", "datetime"],
-    ["description", "done", "due_time"]
+    ["description", "done", "due_time"],
+    changeApplication,
+    getClientApplications,
+    removeApplication,
+    getClientApplicationsCount,
+    "applications-list",
+    "applications-header"
 );
 
 export function fromUserString(str) {

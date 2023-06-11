@@ -1,36 +1,24 @@
-export class TableApplicationsComponent {
-    constructor(parent, isDisplay) {
+export class TableComponent {
+    constructor(parent, isDisplay, properties) {
         this.parent = parent;
         this.isDisplay = isDisplay;
+        this.properties = properties;
     }
 
     getHTML() {
         return (
             `
             <section class="section">
-            <div id="applicationsDisplay" class="box" style="margin-bottom: -50px !important;">
+            <div class="box" style="margin-bottom: -50px !important;">
                 Ваши заявления:
                 <br />
                 <div class="table-responsive">
                     <table id="myTable" class="table is-bordered is-full-width">
                         <thead>
-                            <tr id="applicationsHeader">
-                                <th scope="col">Содержание</th>
-                                <th scope="col">Выполнено</th>
-                                <th scope="col">Дедлайн</th>
-                                <th scope="col" style="width: 100px !important;"></th>
-                                <!--<th scope="col">Удалить?</th>-->
+                            <tr id="${this.properties.headerId}">
                             </tr>
                         </thead>
-                        <tbody id="applicationsList">
-                        <!--<tr>
-                                <td>1</td>
-                                <td>!!!</td>
-                                <td>false</td>
-                                <td>2023-05-27 09:06:26.113602+03</td>
-                                <td>1</td>
-                                <td>Delete</td>
-                            </tr>-->
+                        <tbody id="${this.properties.listId}">
                         </tbody>
                     </table>
                 </div>

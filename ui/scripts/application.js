@@ -9,12 +9,12 @@ export function createApplication(description, isDone, dueTime, createdBy) {
     return application;
 }
 
-export function getClientApplicationsCount(createdBy, searchCol, searchValue) {
+export function getClientApplicationsCount(searchCol, searchValue, createdBy) {
     const count = invoke('get_client_applications_count', {createdBy, searchCol, searchValue});
     return count;
 }
 
-export function getClientApplications(clientId, searchCol, searchValue, sortCol, sortWay, limit, offset) {
+export function getClientApplications(searchCol, searchValue, sortCol, sortWay, limit, offset, clientId) {
     const applications = invoke('get_client_applications', { clientId, searchCol, searchValue, sortCol, sortWay, limit, offset });
     return applications;
 }

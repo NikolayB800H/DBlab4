@@ -1,5 +1,5 @@
 import { HeaderComponent } from "../../components/header/index.js";
-import { TableApplicationsComponent } from "../../components/table-applications/index.js";
+import { TableComponent } from "../../components/table/index.js";
 import { AddApplicationComponent } from "../../components/add-application/index.js";
 import { main } from "../../main.js";
 import { showContentList } from "../../ui.js";
@@ -8,9 +8,10 @@ import { applicationTable } from "../../tables-poperties.js";
 export class ApplicationsPage {
     constructor(parent) {
         this.parent = parent;
+        this.properties = applicationTable;
         this.headerComponent = new HeaderComponent(this, true)
-        this.addApplicationComponent = new AddApplicationComponent(this, true, applicationTable);
-        this.tableApplicationsComponent = new TableApplicationsComponent(this, true);
+        this.addApplicationComponent = new AddApplicationComponent(this, true, this.properties);
+        this.tableComponent = new TableComponent(this, true, this.properties);
     }
 
     getHTML() {
@@ -42,7 +43,7 @@ export class ApplicationsPage {
 
         this.headerComponent.render();
         this.addApplicationComponent.render();
-        this.tableApplicationsComponent.render();
-        showContentList(main.user, applicationTable);
+        this.tableComponent.render();
+        showContentList([main.user], applicationTable);
     }
 }

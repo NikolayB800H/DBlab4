@@ -17,7 +17,7 @@ export class AddApplicationComponent {
         }
         const application = await createApplication(input[0], input[1], input[2], main.universalId);
         const application_id = await addNewApplication(application);
-        await showContentList(main.universalId, properties);
+        await showContentList([main.universalId], properties);
     }
 
     getHTML() {

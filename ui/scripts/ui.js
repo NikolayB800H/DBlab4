@@ -1,51 +1,51 @@
-import { changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
 import { fromUserString, fromUserBool, fromUserDatetime } from "./tables-poperties.js";
 
 export function setElementVisible(element, visible) {
     for (let i = 0; i < element.length; i++) {
-        element[i].isDisplay = visible[i]
+        element[i].isDisplay = visible[i];
     }
-    element[0].parent.unrender()
-    element[0].parent.render()
+    element[0].parent.unrender();
+    element[0].parent.render();
 }
 
-export async function showContentList(clientId, properties) {
+export async function showContentList(queryArgs, properties) { // omagad
     let activeCol = null;
     let activeSearch = null;
     let sortWay = "";
     let activeSort = null;
     let searchBar = null;
     let searchBarParent = null;
-    let applications = null;
+    let contentRecords = null;
     let sorts = [];
     let searches = [];
     let cols = [];
     let searchValue = "";
     let pagesCount = 0;
-    let rowsPerPage = 6;
+    let rowsPerPage = 6; // should be in properties, but i dont want
     let pageNow = 1;
     let pageBtns = [];
     let blockChoice = false;
     let matrix = null;
     let undoChange = [];
-    const applicationsList = document.getElementById('applicationsList');
-    const applicationsHeader = document.getElementById('applicationsHeader');
+    const recordsList = document.getElementById(properties.listId);
+    const recordsHeader = document.getElementById(properties.headerId);
     const paginationList = document.getElementById('pagination-list');
     const paginationPrev = document.getElementById('pagination-previous');
     const paginationNext = document.getElementById('pagination-next');
-    if (applicationsList === null || applicationsHeader === null || paginationList === null) {
+    if (recordsList === null || recordsHeader === null || paginationList === null) {
         return;
     }
-    applicationsHeader.replaceChildren();
+    recordsHeader.replaceChildren();
 
     async function loadList() {
         let searchCol = (activeSearch === null || searchValue == "") ? "" : properties.fields[activeSearch];
         let sortCol = (activeSort === null) ? "" : properties.fields[activeSort];
         let recordCounter = 0;
         let recordPrevElem;
-        applicationsList.replaceChildren();
+        recordsList.replaceChildren();
         for (; recordCounter < rowsPerPage; ++recordCounter) {
-            const applicationNode = document.createElement('tr');
+            const recordNode = document.createElement('tr');
+            recordNode.replaceChildren();
             let counter = 0;
             let prevElemTd;
             for (let i in properties.include) {
@@ -56,38 +56,35 @@ export async function showContentList(clientId, properties) {
                 elemTd.onmouseover = login.bind(elemTd, cols[counter]);
                 elemTd.onmouseout = logout.bind(elemTd, cols[counter]);
                 if (counter == 0) {
-                    applicationNode.insertBefore(elemTd, applicationNode.lastChild);
+                    recordNode.insertBefore(elemTd, recordNode.lastChild);
                 } else {
-                    applicationNode.insertBefore(elemTd, prevElemTd.nextSibling);
+                    recordNode.insertBefore(elemTd, prevElemTd.nextSibling);
                 }
                 ++counter;
                 prevElemTd = elemTd;
             }
             if (recordCounter == 0) {
-                applicationsList.insertBefore(applicationNode, applicationsList.lastChild);
+                recordsList.insertBefore(recordNode, recordsList.lastChild);
             } else {
-                applicationsList.insertBefore(applicationNode, recordPrevElem.nextSibling);
+                recordsList.insertBefore(recordNode, recordPrevElem.nextSibling);
             }
-            recordPrevElem = applicationNode;
+            recordPrevElem = recordNode;
         }
-        //applicationsList.focus();
-        pagesCount = await getClientApplicationsCount(
-            clientId,
+        pagesCount = await properties.counter(
             searchCol,
-            searchValue
+            searchValue,
+            ...queryArgs
         );
-        //applicationsList.focus();
         pagesCount = Math.ceil(pagesCount / rowsPerPage);
-        applications = await getClientApplications(
-            clientId,
+        contentRecords = await properties.loader(
             searchCol,
             searchValue,
             sortCol,
             sortWay,
             rowsPerPage,
-            pageNow * rowsPerPage - rowsPerPage
+            pageNow * rowsPerPage - rowsPerPage,
+            ...queryArgs
         );
-        //applicationsList.focus();
         setTimeout(function() {
         if (pageNow === 1) {
             paginationPrev.classList.add("is-disabled");
@@ -101,13 +98,13 @@ export async function showContentList(clientId, properties) {
         }
 
         recordCounter = 0;
-        let applicationNode = applicationsList.firstChild;
+        let recordNode = recordsList.firstChild;
         matrix = [];
-        for (const application of applications) {
-            let elemTd = applicationNode.firstChild;
+        for (const contentRecord of contentRecords) {
+            let elemTd = recordNode.firstChild;
             let counter = 0;
             let matrixRow = [];
-            for (let [key, val] of Object.entries(application)) {
+            for (let [key, val] of Object.entries(contentRecord)) {
                 if (!properties.exclude.includes(key)) {
                     if (properties.types[counter] == "datetime") {
                         val = (new Date(val).toLocaleString('en-GB', {timeZone:'UTC'}));
@@ -133,7 +130,7 @@ export async function showContentList(clientId, properties) {
             const deleteButton = document.createElement('button');
             deleteButton.textContent = "✖";
             deleteButton.title = "Удалить запись";
-            deleteButton.name = application.id;
+            deleteButton.name = contentRecord.id;
             deleteButton.id = `delete-${recordCounter}`;
             deleteButton.type = "button";
             deleteButton.style = "margin-left: 6px";
@@ -143,7 +140,7 @@ export async function showContentList(clientId, properties) {
             const editButton = document.createElement('button');
             editButton.textContent = "✎";
             editButton.title = "Изменить запись";
-            editButton.name = application.id;
+            editButton.name = contentRecord.id;
             editButton.id = `edit-${recordCounter}`;
             editButton.type = "button";
             editButton.style = "margin-left: 6px";
@@ -156,21 +153,14 @@ export async function showContentList(clientId, properties) {
             rowButtons.insertBefore(deleteButton, rowButtons.lastChild);
             rowButtons.insertBefore(editButton, deleteButton);
 
-            applicationNode.insertBefore(rowButtons, applicationNode.lastChild.nextSibling);
+            recordNode.insertBefore(rowButtons, recordNode.lastChild.nextSibling);
             
-            applicationNode.onmouseover = login.bind(applicationNode, rowButtons);
-            applicationNode.onmouseout = logout.bind(applicationNode, rowButtons);
-            /*if (recordCounter == 0) {
-                applicationsList.insertBefore(applicationNode, applicationsList.lastChild);
-            } else {
-                applicationsList.insertBefore(applicationNode, recordPrevElem.nextSibling);
-            }*/
+            recordNode.onmouseover = login.bind(recordNode, rowButtons);
+            recordNode.onmouseout = logout.bind(recordNode, rowButtons);
+            
             ++recordCounter;
-            //recordPrevElem = applicationNode;
-            applicationNode = applicationNode.nextSibling;
+            recordNode = recordNode.nextSibling;
         }
-        //applicationsList.classList.add("is-hidden");
-        //applicationsList.classList.remove("is-hidden");
         pageBtns = [];
         paginationList.replaceChildren();
         for (let i = 1; i <= pagesCount; i++) {
@@ -180,6 +170,7 @@ export async function showContentList(clientId, properties) {
             pageBtn.classList.add("button");
             pageBtn.innerHTML = `${i}`;
             pageBtn.addEventListener("click", async function(event) {
+                if (blockChoice) return;
                 let now = Number(event.target.innerHTML);
                 pageBtns[pageNow - 1].classList.remove("is-dark");
                 pageNow = now;
@@ -212,8 +203,8 @@ export async function showContentList(clientId, properties) {
         if (matrix[num] === null) return;
         switch(deleteBtn.textContent) {
             case "✖":
-                const applicationId = parseInt(deleteBtn.name);
-                await removeApplication(applicationId);
+                const recordId = parseInt(deleteBtn.name);
+                await properties.remover(recordId);
                 await loadList();
                 break;
             case "🚫":
@@ -250,7 +241,7 @@ export async function showContentList(clientId, properties) {
     }
 
     async function saveChanges(id, values) {
-        const changedId = await changeApplication(id, fromUserString(values[0]), fromUserBool(values[1]), fromUserDatetime(values[2]));
+        const changedId = await properties.changer(id, fromUserString(values[0]), fromUserBool(values[1]), fromUserDatetime(values[2]));
     }
 
     function logclick(editBtn, deleteBtn) {
@@ -463,14 +454,20 @@ export async function showContentList(clientId, properties) {
     }
 
     paginationPrev.addEventListener("click", async function (event) {
+        if (blockChoice) return;
         if (pageNow === 1) return;
+        blockChoice = true;
         --pageNow;
         await loadList();
+        blockChoice = false;
     });
     paginationNext.addEventListener("click", async function (event) {
+        if (blockChoice) return;
         if (pageNow === pagesCount) return;
+        blockChoice = true;
         ++pageNow;
         await loadList();
+        blockChoice = false;
     });
 
     let counterTh = 0;
@@ -516,9 +513,9 @@ export async function showContentList(clientId, properties) {
         elemTh.insertBefore(colButtons, elemTh.nextSibling);
 
         if (counterTh === 0) {
-            applicationsHeader.insertBefore(elemTh, applicationsHeader.lastChild);
+            recordsHeader.insertBefore(elemTh, recordsHeader.lastChild);
         } else {
-            applicationsHeader.insertBefore(elemTh, prevElemTh.nextSibling);
+            recordsHeader.insertBefore(elemTh, prevElemTh.nextSibling);
         }
         elemTh.onmouseover = login.bind(elemTh, colButtons);
         elemTh.onmouseout = logout.bind(elemTh, colButtons);
