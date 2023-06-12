@@ -19,8 +19,12 @@ export function getClientApplications(searchCol, searchValue, sortCol, sortWay, 
     return applications;
 }
 
-export function addNewApplication(application) {
+/*export function addNewApplication(application) {
     const application_id = invoke('add_application', { application });
+    return application_id;
+}*/
+export function addNewApplication(description, isDone, dueTime, createdBy) {
+    const application_id = invoke('add_application', { description, isDone, dueTime, createdBy });
     return application_id;
 }
 

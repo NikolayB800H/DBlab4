@@ -31,7 +31,7 @@ pub async fn change_application(
         UPDATE applications
         SET description = {}, done = {}, due_time = {}
         WHERE id = {}
-        RETURNING applications.id
+        RETURNING id
         "#,
         description,
         done,
@@ -121,7 +121,7 @@ pub async fn get_client_applications(
     Ok(application_entities.into_iter().map(Application::from).collect())
 }
 
-pub async fn add_application(pool: &PgPool, application: Application) -> Result<i64, sqlx::Error> {
+/*pub async fn add_application(pool: &PgPool, application: Application) -> Result<i64, sqlx::Error> {
     let rec = sqlx::query!(
         r#"
         INSERT INTO applications (description, done, due_time, created_by)
@@ -137,6 +137,30 @@ pub async fn add_application(pool: &PgPool, application: Application) -> Result<
     .await?;
 
     Ok(rec.id)
+}*/
+
+pub async fn add_application(pool: &PgPool,
+    description: String,
+    done: String,
+    due_time: String,
+    created_by: i64
+) -> Result<i64, sqlx::Error> {
+    let query = format!(
+        r#"
+        INSERT INTO applications (description, done, due_time, created_by)
+        VALUES ( {}, {}, {}, {} )
+        RETURNING id
+        "#,
+        description,
+        done,
+        due_time,
+        created_by
+    );
+    let count = sqlx::query_as::<sqlx::Postgres, MyI64cringe>(&query)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(count.id.unwrap())
 }
 
 pub async fn set_application_done(pool: &PgPool, application_id: i64, done: bool) -> Result<u64, sqlx::Error> {

@@ -1,5 +1,5 @@
 import { addNewApplication, createApplication } from '../../application.js';
-import { main } from '../../main.js';
+//import { main } from '../../main.js';
 import { showContentList } from '../../ui.js';
 export class AddApplicationComponent {
     constructor(parent, isDisplay, properties) {
@@ -13,19 +13,22 @@ export class AddApplicationComponent {
         for (let i = 0; i < properties.getters.length; ++i) {
             let tmp = properties.getters[i](inputs[i]);
             if (tmp === null) return;
+            tmp = properties.froms[i](tmp);
             input.push(tmp);
         }
-        const application = await createApplication(input[0], input[1], input[2], main.universalId);
-        const application_id = await addNewApplication(application);
-        await showContentList([main.universalId], properties);
+        input = input.concat(properties.addArgs);
+        /*const application = await createApplication(input[0], input[1], input[2], main.universalId);
+        const application_id = await addNewApplication(application);*/
+        const recordId = await addNewApplication(...input);
+        await showContentList(properties);
     }
 
     getHTML() {
         return (
             `
-            <section class="section">
-            <div id="applicationDiv" class="box" style="margin-bottom: -50px !important; margin-top: -50px !important;">
-                <form id="add-application-form" class="box" style="display: table-caption;">Новое заявление<br />
+            <section class="section mt-0 pt-0">
+            <div id="applicationDiv" class="box" style="margin-bottom: -50px !important;">
+                <form id="add-application-form" class="box" style="display: table-caption;">
                     <div class="field">
                         <label class="label">Содержание</label>
                         <div class="control">
@@ -63,7 +66,8 @@ export class AddApplicationComponent {
             //fieldList.style = "display: table-caption;";
             let addLabel = document.createElement('label');
             addLabel.classList.add("label");
-            addLabel.innerHTML = "Новое заявление";
+            addLabel.innerHTML = this.properties.addTitle;
+            addLabel.style = "text-align: center; font-size: 30px;";
             //this.fieldList.replaceChildren();
             fieldList.appendChild(addLabel);
             let inputs = [];

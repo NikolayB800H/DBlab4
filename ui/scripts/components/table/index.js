@@ -11,10 +11,12 @@ export class TableComponent {
     getHTML() {
         return (
             `
-            <section class="section">
+            <section class="section px-0">
             <div class="box" style="margin-bottom: -50px !important;">
-                Ваши заявления:
-                <br />
+                <h1 style="text-align: center; font-size: 30px;">
+                    <strong>${this.properties.title}</strong>
+                </h1>
+                <br/>
                 <div class="table-responsive">
                     <table id="myTable" class="table is-bordered is-full-width">
                         <thead>
@@ -41,7 +43,7 @@ export class TableComponent {
         if (this.isDisplay) {
             const html = this.getHTML()
             this.parent.body.insertAdjacentHTML('beforeend', html)
-            showContentList([main.user], this.properties);
+            showContentList(this.properties);
         }
     }
 }

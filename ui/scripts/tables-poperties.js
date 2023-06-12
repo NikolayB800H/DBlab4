@@ -1,7 +1,9 @@
 import { changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
-
+import { main } from "./main.js";
 class TableProperties {
-    constructor(include, exclude, types, fields, changer, loader, remover, counter, listId, headerId) {
+    constructor(addTitle, title, include, exclude, types, fields, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs) {
+        this.addTitle = addTitle;
+        this.title = title;
         this.include = include;
         this.exclude = exclude;
         this.types = types;
@@ -15,6 +17,8 @@ class TableProperties {
         this.counter = counter;
         this.listId = listId;
         this.headerId = headerId;
+        this.addArgs = addArgs;
+        this.queryArgs = queryArgs;
         this.types.forEach(element => {
             switch (element) {
                 case "string":
@@ -39,20 +43,28 @@ class TableProperties {
     }
 }
 
-export const boolType = ["true", "false"];
+export let applicationTable;
 
-export const applicationTable = new TableProperties(
-    ["Содержание", "Выполнено", "Дедлайн"],
-    ["id", "created_by"],
-    ["string", "bool", "datetime"],
-    ["description", "done", "due_time"],
-    changeApplication,
-    getClientApplications,
-    removeApplication,
-    getClientApplicationsCount,
-    "applications-list",
-    "applications-header"
-);
+export function afterMain() {
+    applicationTable = new TableProperties(
+        "Новое заявление",
+        "Ваши заявления",
+        ["Содержание", "Выполнено", "Дедлайн"],
+        ["id", "created_by"],
+        ["string", "bool", "datetime"],
+        ["description", "done", "due_time"],
+        changeApplication,
+        getClientApplications,
+        removeApplication,
+        getClientApplicationsCount,
+        "applications-list",
+        "applications-header",
+        [main.universalId],
+        [main.universalId]
+    );
+}
+
+export const boolType = ["true", "false"];
 
 export function fromUserString(str) {
     return `'${str}'`;

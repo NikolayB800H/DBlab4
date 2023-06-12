@@ -1,4 +1,5 @@
 import { main } from "../../main.js";
+import { afterMain } from "../../tables-poperties.js";
 
 export class HelloSomebodyComponent {
     constructor(parent, isDisplay) {
@@ -37,6 +38,9 @@ export class HelloSomebodyComponent {
         if (this.isDisplay) {
             const html = this.getHTML()
             this.parent.body.insertAdjacentHTML('beforeend', html)
+            if (main.universalId !== null) {
+                afterMain();
+            }
         }
     }
 }

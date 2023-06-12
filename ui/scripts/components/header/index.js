@@ -24,7 +24,7 @@ export class HeaderComponent {
     getHTML() {
         return (
             `
-            <section id="header-section" class="section">
+            <section id="header-section" class="section pb-0 mb-0">
             <nav class="navbar is-dark is-fixed-top" role="navigation" aria-label="main navigation">
                 <div class="navbar-brand" style="display: flex !important; justify-content: left !important; align-items: left !important;">
                     <a id="goto-true-hello-1" class="navbar-item">

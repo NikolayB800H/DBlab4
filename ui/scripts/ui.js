@@ -8,7 +8,7 @@ export function setElementVisible(element, visible) {
     element[0].parent.render();
 }
 
-export async function showContentList(queryArgs, properties) { // omagad
+export async function showContentList(properties) { // omagad
     let activeCol = null;
     let activeSearch = null;
     let sortWay = "";
@@ -73,7 +73,7 @@ export async function showContentList(queryArgs, properties) { // omagad
         pagesCount = await properties.counter(
             searchCol,
             searchValue,
-            ...queryArgs
+            ...properties.queryArgs
         );
         pagesCount = Math.ceil(pagesCount / rowsPerPage);
         contentRecords = await properties.loader(
@@ -83,7 +83,7 @@ export async function showContentList(queryArgs, properties) { // omagad
             sortWay,
             rowsPerPage,
             pageNow * rowsPerPage - rowsPerPage,
-            ...queryArgs
+            ...properties.queryArgs
         );
         setTimeout(function() {
         if (pageNow === 1) {

@@ -81,13 +81,28 @@ pub async fn get_client_applications<'r>(
     Ok(applications)
 }
 
-#[tauri::command]
+/*#[tauri::command]
 pub async fn add_application<'r>(
     application: Application,
     connection: State<'r, DbConnectionPool>,
 ) -> Result<i64, String> {
     let pool = &*connection.connection.lock().await;
     let application_id = applications_controller::add_application(pool, application)
+        .await
+        .map_err(|e| format!("DB error: {}", e))?;
+    Ok(application_id)
+}*/
+
+#[tauri::command]
+pub async fn add_application<'r>(
+    description: String,
+    is_done: String,
+    due_time: String,
+    created_by: i64,
+    connection: State<'r, DbConnectionPool>,
+) -> Result<i64, String> {
+    let pool = &*connection.connection.lock().await;
+    let application_id = applications_controller::add_application(pool, description, is_done, due_time, created_by)
         .await
         .map_err(|e| format!("DB error: {}", e))?;
     Ok(application_id)
