@@ -1,11 +1,11 @@
 import { addNewApplication, changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
 import { main } from "./main.js";
 class TableProperties {
-    constructor(addTitle, title, include, exclude, types, fields, adder, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs) {
+    constructor(addTitle, title, include, allFields, types, fields, adder, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs, master, slave) {
         this.addTitle = addTitle;
         this.title = title;
         this.include = include;
-        this.exclude = exclude;
+        this.allFields = allFields;
         this.types = types;
         this.fields = fields;
         this.setters = [];
@@ -22,6 +22,8 @@ class TableProperties {
         this.headerId = headerId;
         this.addArgs = addArgs;
         this.queryArgs = queryArgs;
+        this.master = master;
+        this.slave = slave;
         this.types.forEach(element => {
             switch (element) {
                 case "string":
@@ -36,7 +38,28 @@ class TableProperties {
                     this.getters.push(getInputBool);
                     this.froms.push(fromUserBool);
                     this.searchers.push(searchBool);
-                    this.stylers.push(styleBool);
+                    this.stylers.push(styleEnum);
+                    break;
+                case "applicationStatus":
+                    this.setters.push(setInputApplicationStatus);
+                    this.getters.push(getInputEnum);
+                    this.froms.push(fromUserEnum);
+                    this.searchers.push(searchEnum);
+                    this.stylers.push(styleEnum);
+                    break;
+                case "serviceName":
+                    this.setters.push(setInputServiceName);
+                    this.getters.push(getInputEnum);
+                    this.froms.push(fromUserEnum);
+                    this.searchers.push(searchEnum);
+                    this.stylers.push(styleEnum);
+                    break;
+                case "serviceStatus":
+                    this.setters.push(setInputServiceStatus);
+                    this.getters.push(getInputEnum);
+                    this.froms.push(fromUserEnum);
+                    this.searchers.push(searchEnum);
+                    this.stylers.push(styleEnum);
                     break;
                 case "datetime":
                     this.setters.push(setInputDatetime);
@@ -54,14 +77,14 @@ class TableProperties {
 
 export let applicationTable;
 
-export function afterMain() {
-    applicationTable = new TableProperties(
-        "Новое заявление",
-        "Ваши заявления",
-        ["Содержание", "Выполнено", "Дедлайн"],
-        ["id", "created_by"],
-        ["string", "bool", "datetime"],
-        ["description", "done", "due_time"],
+export function afterMain() {               // services                               | applications                                   //
+    applicationTable = new TableProperties( // id, name, status, update_time, content | id, status, update_time, client_id, service_id //
+        "Новое заявление на новую услугу",  // LEFT JOIN ON services.id = applications.service_id
+        "Ваши заявления на услуги",
+        ["Название услуги", "Содержание услуги", "Статус заявления", "Дата обновления"],
+        ["services_id", "services_name", "services_status", "services_update_time", "services_content", "applications_id", "applications_status", "applications_update_time", "applications_client_id", "applications_service_id"],
+        ["serviceName", "string", "applicationStatus", "datetime"],
+        ["services_name", "services_content", "applications_status", "applications_update_time"],
         addNewApplication,
         changeApplication,
         getClientApplications,
@@ -70,11 +93,16 @@ export function afterMain() {
         "applications-list",
         "applications-header",
         [main.universalId],
-        [main.universalId]
+        [main.universalId],
+        "services",
+        "applications"
     );
 }
 
-export const boolType = ["true", "false"];
+export const boolType = ['true', 'false'];
+export const applicationStatus = ['Принято', 'Отклонено', 'Закрыто', 'Обрабатывается'];
+export const serviceName = ['Анализы', 'Больничный', 'Справка', 'Обследование'];
+export const serviceStatus = ['Выполнена', 'Провалена', 'Неначата'];
 
 export function styleString(bar) {
     bar.classList.remove("input");
@@ -82,7 +110,7 @@ export function styleString(bar) {
     bar.style.display = "inline-block !important";
 }
 
-export function styleBool(bar) { }
+export function styleEnum(bar) { }
 
 export function styleDatetime(bar) {
     bar.classList.remove("input");
@@ -98,6 +126,10 @@ export function fromUserBool(str) {
     return `${str}`.toUpperCase();
 }
 
+export function fromUserEnum(str) {
+    return `'${str}'`;
+}
+
 export function fromUserDatetime(str) {
     str = str.split(',');
     str[0] = str[0].split('/').reverse().join('-');
@@ -105,11 +137,15 @@ export function fromUserDatetime(str) {
 }
 
 export function searchString(str) {
-    return `LIKE ${fromUserString(str).replace(/.$/, "%")}'`;
+    return `LIKE '%${str}%'`;
 }
 
 export function searchBool(str) {
     return `= ${fromUserBool(str)}`;
+}
+
+export function searchEnum(str) {
+    return `= ${fromUserEnum(str)}`;
 }
 
 export function searchDatetime(str) {
@@ -129,6 +165,14 @@ export function getInputBool(i) {
     return valu.value == "true";
 }
 
+export function getInputEnum(i) {
+    let valu = document.querySelector(`input[name="${i.firstChild.lastChild.name}"]:checked`);
+    if (valu === null) {
+        return null;
+    }
+    return valu.value;
+}
+
 export function getInputDatetime(i) {
     if (i.value == "") return null;
     return i.value;
@@ -141,31 +185,45 @@ export function setInputString(i, prefix) {
     bar.classList.add("input");
     bar.name = i.name;
     bar.placeholder = "...";
-    //bar.style = "margin-left: 6px; padding: 0px !important; height: 26px; display: inline-block;";
     return bar;
 }
 
-export function setInputBool(i, prefix) {
+function setInputEnum(i, prefix, type) {
     let bar = document.createElement('div');
     bar.name = i.name;
-    //bar.style = "margin-left: 6px;";
     let len = 0;
-    boolType.forEach(element => {
+    type.forEach(element => {
         len += element.length + 1.8;
         let varBut = document.createElement('input');
         varBut.type = "radio";
         varBut.id = `radio-${i.name}-${element}`;
-        varBut.name = `${prefix}-bar-choice`;
+        varBut.name = `${i.name}-${prefix}-bar-choice`;
         varBut.value = element;
         let varButLabel = document.createElement('label');
-        varButLabel.for = `${prefix}-bar-choice`;
+        varButLabel.for = `${i.name}-${prefix}-bar-choice`;
         varButLabel.textContent = element;
         varButLabel.classList.add("radio");
         varButLabel.appendChild(varBut);
         bar.appendChild(varButLabel);
     });
-    i.style.width = 48 + 8 * len + "px";
+    i.style.width = 48 + 10 * len + "px";
     return bar;
+}
+
+export function setInputBool(i, prefix) {
+    return setInputEnum(i, prefix, boolType);
+}
+
+export function setInputApplicationStatus(i, prefix) {
+    return setInputEnum(i, prefix, applicationStatus);
+}
+
+export function setInputServiceName(i, prefix) {
+    return setInputEnum(i, prefix, serviceName);
+}
+
+export function setInputServiceStatus(i, prefix) {
+    return setInputEnum(i, prefix, serviceStatus);
 }
 
 export function setInputDatetime(i, prefix) {
@@ -176,7 +234,6 @@ export function setInputDatetime(i, prefix) {
     bar.name = i.name;
     bar.readOnly = true;
     bar.placeholder = "...";
-    //bar.style.position = "relative";
     const opitons = {
         "appendTo": i,
         "autoClose": false,
@@ -200,25 +257,6 @@ export function setInputDatetime(i, prefix) {
             "timeOption": "has-text-weight-normal",
             "selectedTime": "rd-time-selected has-text-weight-normal",
             "dayTable": "table is-bordered"
-            /*"back": "rd-back",
-            "container": "rd-container",
-            "date": "rd-date",
-            "dayBody": "rd-days-body",
-            "dayBodyElem": "rd-day-body",
-            "dayConcealed": "rd-day-concealed",
-            "dayDisabled": "rd-day-disabled",
-            "dayHead": "rd-days-head",
-            "dayHeadElem": "rd-day-head",
-            "dayRow": "rd-days-row",
-            "dayTable": "rd-days",
-            "month": "rd-month",
-            "next": "rd-next",
-            "positioned": "rd-container-attachment",
-            "selectedDay": "rd-day-selected",
-            "selectedTime": "rd-time-selected",
-            "time": "rd-time",
-            "timeList": "rd-time-list",
-            "timeOption": "rd-time-option"*/
         },
         "time": true,
         "timeFormat": "HH:mm:ss",

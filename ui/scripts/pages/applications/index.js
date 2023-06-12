@@ -16,7 +16,7 @@ export class ApplicationsPage {
     getHTML() {
         return (
             `
-            <form id="${this.id}" class="container">
+            <form id="${this.id}" class="container is-fluid">
                 <div id="page-body" class="box"></div>
             </form>
             `

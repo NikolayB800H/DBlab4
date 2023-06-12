@@ -1,16 +1,11 @@
 const { invoke } = window.__TAURI__.tauri;
 
-export function changeApplication(applicationId, description, isDone, dueTime) {
-    return invoke('change_application', { applicationId, description, isDone, dueTime });
+export function changeApplication(applicationId, servicesName, servicesContent, applicationsStatus, applicationsUpdateTime) {
+    return invoke('change_application', { applicationId, servicesName, servicesContent, applicationsStatus, applicationsUpdateTime });
 }
 
-export function createApplication(description, isDone, dueTime, createdBy) {
-    const application = invoke('create_application', { description, done: isDone, dueTime, createdBy });
-    return application;
-}
-
-export function getClientApplicationsCount(searchCol, searchValue, createdBy) {
-    const count = invoke('get_client_applications_count', {createdBy, searchCol, searchValue});
+export function getClientApplicationsCount(searchCol, searchValue, clientId) {
+    const count = invoke('get_client_applications_count', {clientId, searchCol, searchValue});
     return count;
 }
 
@@ -19,17 +14,9 @@ export function getClientApplications(searchCol, searchValue, sortCol, sortWay, 
     return applications;
 }
 
-/*export function addNewApplication(application) {
-    const application_id = invoke('add_application', { application });
+export function addNewApplication(servicesName, servicesContent, applicationsStatus, applicationsUpdateTime, applicationsClientId) {
+    const application_id = invoke('add_application', { servicesName, servicesContent, applicationsStatus, applicationsUpdateTime, applicationsClientId });
     return application_id;
-}*/
-export function addNewApplication(description, isDone, dueTime, createdBy) {
-    const application_id = invoke('add_application', { description, isDone, dueTime, createdBy });
-    return application_id;
-}
-
-export function setApplicationDone(applicationId, done) {
-    return invoke('set_application_done', { applicationId, done });
 }
 
 export function removeApplication(applicationId) {

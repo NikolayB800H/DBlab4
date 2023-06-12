@@ -14,8 +14,8 @@ export class TableComponent {
                     <strong>${this.properties.title}</strong>
                 </h1>
                 <br/>
-                <div class="table-responsive">
-                    <table id="myTable" class="table is-bordered is-full-width">
+                <div class="table-responsive table-container">
+                    <table id="myTable" class="table is-bordered is-fullwidth">
                         <thead>
                             <tr id="${this.properties.headerId}">
                             </tr>
@@ -99,15 +99,15 @@ export class TableComponent {
                 recordPrevElem = recordNode;
             }
             pagesCount = await properties.counter(
-                searchCol,
+                searchCol.replace(/_/, '.'),
                 searchValue,
                 ...properties.queryArgs
             );
             pagesCount = Math.ceil(pagesCount / rowsPerPage);
             contentRecords = await properties.loader(
-                searchCol,
+                searchCol.replace(/_/, '.'),
                 searchValue,
-                sortCol,
+                sortCol.replace(/_/, '.'),
                 sortWay,
                 rowsPerPage,
                 pageNow * rowsPerPage - rowsPerPage,
@@ -129,19 +129,21 @@ export class TableComponent {
             let recordNode = recordsList.firstChild;
             matrix = [];
             for (const contentRecord of contentRecords) {
-                let elemTd = recordNode.firstChild;
-                let counter = 0;
-                let matrixRow = [];
+                let elemTd;
+                let joinedId;
+                let matrixRow = new Array(properties.fields.length);
                 for (let [key, val] of Object.entries(contentRecord)) {
-                    if (!properties.exclude.includes(key)) {
-                        if (properties.types[counter] == "datetime") {
+                    if (key == `${properties.slave}_id`) joinedId = val;
+                    if (properties.fields.includes(key)) {
+                        let i = properties.fields.indexOf(key);
+                        elemTd = recordNode.children[i];
+                        //elemTd.style.maxWidth = Math.ceil(1350/properties.fields.length) + "px";
+                        if (properties.types[i] == "datetime") {
                             val = (new Date(val).toLocaleString('en-GB', {timeZone:'UTC'}));
                         }
                         const elem = elemTd.firstChild;
                         elem.innerHTML = `${val}`;
-                        matrixRow.push(elem);
-                        elemTd = elemTd.nextSibling;
-                        ++counter;
+                        matrixRow[i] = elem;
                     }
                 }
                 matrix.push(matrixRow);
@@ -153,7 +155,7 @@ export class TableComponent {
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = "✖";
                 deleteButton.title = "Удалить запись";
-                deleteButton.name = contentRecord.id;
+                deleteButton.name = joinedId;
                 deleteButton.id = `delete-${recordCounter}`;
                 deleteButton.type = "button";
                 deleteButton.style = "margin-left: 6px";
@@ -163,7 +165,7 @@ export class TableComponent {
                 const editButton = document.createElement('button');
                 editButton.textContent = "✎";
                 editButton.title = "Изменить запись";
-                editButton.name = contentRecord.id;
+                editButton.name = joinedId;
                 editButton.id = `edit-${recordCounter}`;
                 editButton.type = "button";
                 editButton.style = "margin-left: 6px";
@@ -267,6 +269,7 @@ export class TableComponent {
                 args.push(properties.froms[i](values[i]));
             }
             const changedId = await properties.changer(id, ...args);
+            await loadList();
         }
     
         function logclick(editBtn, deleteBtn) {
