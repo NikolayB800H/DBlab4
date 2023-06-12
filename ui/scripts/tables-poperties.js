@@ -1,7 +1,7 @@
-import { changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
+import { addNewApplication, changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
 import { main } from "./main.js";
 class TableProperties {
-    constructor(addTitle, title, include, exclude, types, fields, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs) {
+    constructor(addTitle, title, include, exclude, types, fields, adder, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs) {
         this.addTitle = addTitle;
         this.title = title;
         this.include = include;
@@ -11,6 +11,9 @@ class TableProperties {
         this.setters = [];
         this.getters = [];
         this.froms = [];
+        this.searchers = [];
+        this.stylers = [];
+        this.adder = adder;
         this.changer = changer;
         this.loader = loader;
         this.remover = remover;
@@ -25,16 +28,22 @@ class TableProperties {
                     this.setters.push(setInputString);
                     this.getters.push(getInputString);
                     this.froms.push(fromUserString);
+                    this.searchers.push(searchString);
+                    this.stylers.push(styleString);
                     break;
                 case "bool":
                     this.setters.push(setInputBool);
                     this.getters.push(getInputBool);
                     this.froms.push(fromUserBool);
+                    this.searchers.push(searchBool);
+                    this.stylers.push(styleBool);
                     break;
                 case "datetime":
                     this.setters.push(setInputDatetime);
                     this.getters.push(getInputDatetime);
                     this.froms.push(fromUserDatetime);
+                    this.searchers.push(searchDatetime);
+                    this.stylers.push(styleDatetime);
                     break;
                 default:
                     console.log(`Bad type property: ${element}`);
@@ -53,6 +62,7 @@ export function afterMain() {
         ["id", "created_by"],
         ["string", "bool", "datetime"],
         ["description", "done", "due_time"],
+        addNewApplication,
         changeApplication,
         getClientApplications,
         removeApplication,
@@ -66,6 +76,20 @@ export function afterMain() {
 
 export const boolType = ["true", "false"];
 
+export function styleString(bar) {
+    bar.classList.remove("input");
+    bar.style.height = "26px !important";
+    bar.style.display = "inline-block !important";
+}
+
+export function styleBool(bar) { }
+
+export function styleDatetime(bar) {
+    bar.classList.remove("input");
+    bar.style.height = "26px !important";
+    bar.style.display = "inline-block !important";
+}
+
 export function fromUserString(str) {
     return `'${str}'`;
 }
@@ -78,6 +102,18 @@ export function fromUserDatetime(str) {
     str = str.split(',');
     str[0] = str[0].split('/').reverse().join('-');
     return `'${str.join('')}'`;
+}
+
+export function searchString(str) {
+    return `LIKE ${fromUserString(str).replace(/.$/, "%")}'`;
+}
+
+export function searchBool(str) {
+    return `= ${fromUserBool(str)}`;
+}
+
+export function searchDatetime(str) {
+    return `= ${fromUserDatetime(str)}`;
 }
 
 export function getInputString(i) {

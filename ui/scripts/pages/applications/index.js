@@ -1,21 +1,22 @@
 import { HeaderComponent } from "../../components/header/index.js";
 import { TableComponent } from "../../components/table/index.js";
-import { AddApplicationComponent } from "../../components/add-application/index.js";
+import { AddRecordComponent } from "../../components/add-record/index.js";
 import { applicationTable } from "../../tables-poperties.js";
 
 export class ApplicationsPage {
     constructor(parent) {
         this.parent = parent;
+        this.id = "applications-page";
         this.properties = applicationTable;
         this.headerComponent = new HeaderComponent(this, true)
-        this.addApplicationComponent = new AddApplicationComponent(this, true, this.properties);
+        this.addRecordComponent = new AddRecordComponent(this, true, this.properties);
         this.tableComponent = new TableComponent(this, true, this.properties);
     }
 
     getHTML() {
         return (
             `
-            <form id="applications-page" class="container">
+            <form id="${this.id}" class="container">
                 <div id="page-body" class="box"></div>
             </form>
             `
@@ -23,7 +24,7 @@ export class ApplicationsPage {
     }
 
     get root() {
-        return document.getElementById('applications-page')
+        return document.getElementById(this.id)
     }
 
     get body() {
@@ -40,7 +41,7 @@ export class ApplicationsPage {
         this.parent.insertAdjacentHTML('beforeend', html);
 
         this.headerComponent.render();
-        this.addApplicationComponent.render();
+        this.addRecordComponent.render();
         this.tableComponent.render();
     }
 }
