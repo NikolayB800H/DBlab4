@@ -1,9 +1,8 @@
 use sqlx::{
-    postgres::{PgDatabaseError, PgRow},
-    PgPool, Postgres, Row, Transaction,
+    postgres::{PgDatabaseError, PgRow}, PgPool, FromRow, Row
 };
-use sqlx::FromRow;
 use serde::Serialize;
+use crate::model::application::{dao::application_entity::ApplicationEntity};
 
 #[derive(Debug, Clone, Serialize, FromRow)]
 pub struct MyI64 {
@@ -14,13 +13,6 @@ pub struct MyI64 {
 pub struct MyI64cringe {
     pub id: Option<i64>
 }
-
-#[derive(Debug, Clone, Serialize, sqlx::FromRow, sqlx::Type)]
-pub struct MyU64 {
-    pub value: Option<i64>
-}
-
-use crate::model::application::{dao::application_entity::ApplicationEntity/*, application::Application*/};
 
 pub async fn change_application(
     pool: &PgPool,
@@ -83,65 +75,12 @@ pub async fn get_client_applications_count(
         created_by,
         if search_col.len() == 0 { r#""# } else { second }
     );
-    //println!("{}", query);
     let count = sqlx::query_as::<sqlx::Postgres, MyI64>(&query)
     .fetch_one(pool)
     .await?;
 
     Ok(count.value.unwrap())
 }
-/*
-pub async fn get_all_applications(pool: &PgPool) -> Result<Vec<Application>, sqlx::Error> {
-    let application_entities = sqlx::query_as!(
-        ApplicationEntity,
-        r#"
-        SELECT *
-        FROM applications
-        ORDER BY id
-        "#
-    )
-    .fetch_all(pool)
-    .await?;
-
-    Ok(application_entities.into_iter().map(Application::from).collect())
-}*/
-/*
-pub async fn get_client_applications(
-    pool: &PgPool,
-    client_id: i64,
-    search_col: String,
-    search_value: String,
-    sort_col: String,
-    sort_way: String,
-    limit: i64,
-    offset: i64
-) -> Result<Vec<Application>, sqlx::Error> {
-    let second_ = format!(r#"AND {} {}"#, search_col, search_value);
-    let third_ = format!(r#"ORDER BY {} {}"#, sort_col, sort_way);
-    let second: &str = &second_[..];
-    let third: &str = &third_[..];
-    let query = format!(
-        r#"
-        SELECT *
-        FROM applications
-        WHERE created_by = {}
-        {}
-        {}
-        LIMIT {}
-        OFFSET {}
-        "#,
-        client_id,
-        if search_col.len() == 0 { r#""# } else { second },
-        if sort_col.len() == 0 { r#""# } else { third },
-        limit,
-        offset
-    );
-    let application_entities = sqlx::query_as::<sqlx::Postgres, ApplicationEntity>(&query)
-    .fetch_all(pool)
-    .await?;
-    Ok(application_entities.into_iter().map(Application::from).collect())
-}
-*///VVV
 
 pub fn map_application_entity(row: PgRow) -> Result<ApplicationEntity, sqlx::Error> {
     Ok(ApplicationEntity {
@@ -167,7 +106,6 @@ pub async fn get_client_applications(
     sort_way: String,
     limit: i64,
     offset: i64
-//) -> Result<Vec<Application>, sqlx::Error> {
 ) -> Result<Vec<ApplicationEntity>, sqlx::Error> {
     let second_ = format!(r#"AND {} {}"#, search_col, search_value);
     let third_ = format!(r#"ORDER BY {} {}"#, sort_col, sort_way);
@@ -201,12 +139,11 @@ pub async fn get_client_applications(
         limit,
         offset
     );
-    //println!("{}", query);
-    let application_entities = sqlx::query(&query)//sqlx::query_as::<sqlx::Postgres, ApplicationEntity>(&query)
+    let application_entities = sqlx::query(&query)
     .try_map(map_application_entity)
     .fetch_all(pool)
     .await?;
-    Ok(application_entities.into_iter()/*.map(Application::from)*/.collect())
+    Ok(application_entities.into_iter().collect())
 }
 
 pub async fn add_application(
@@ -217,24 +154,6 @@ pub async fn add_application(
     applications_update_time: String,
     applications_client_id: i64
 ) -> Result<i64, sqlx::Error> {
-    /*
-    WITH ids AS (
-        UPDATE applications
-        SET status = {}, update_time = {}
-        WHERE applications.id = {}
-        RETURNING applications.id
-    )
-    UPDATE services
-    SET name = {}, content = {}
-    WHERE services.id = (
-        SELECT services.id
-        FROM services
-        LEFT JOIN applications
-        ON services.id = applications.service_id
-        WHERE applications.id = {}
-    )
-    RETURNING services.id
-    */
     let query = format!(
         r#"
         WITH ids AS (
@@ -258,35 +177,42 @@ pub async fn add_application(
 
     Ok(count.id.unwrap())
 }
-/*
-pub async fn set_application_done(pool: &PgPool, application_id: i64, done: bool) -> Result<u64, sqlx::Error> {
-    let rows_affected = sqlx::query!(
-        r#"
-        UPDATE applications
-        SET done = $1
-        WHERE id = $2
-        "#,
-        done,
-        application_id
-    )
-    .execute(pool)
-    .await?
-    .rows_affected();
 
-    Ok(rows_affected)
-}
-*/
-pub async fn remove_application(pool: &PgPool, application_id: i64) -> Result<u64, sqlx::Error> {
-    let rows_affected = sqlx::query!(
+pub async fn remove_application(pool: &PgPool, application_id: i64) -> Result<i64, sqlx::Error> {
+    let query = format!(
         r#"
-        DELETE FROM applications
-        WHERE id = $1
+        WITH comp AS (
+            SELECT services.id AS services_id, applications.id AS applications_id
+            FROM services
+            LEFT JOIN applications
+            ON services.id = applications.service_id
+            WHERE services.id = (
+                SELECT services.id AS services_id
+                FROM services
+                LEFT JOIN applications
+                ON services.id = applications.service_id
+                WHERE applications.id = {}
+            )
+        ), ids AS (
+            DELETE FROM applications
+            WHERE id = {}
+            RETURNING id
+        ), target AS (
+            DELETE FROM services
+            WHERE id = (
+                SELECT services_id
+                FROM comp
+                WHERE applications_id = {}
+                AND 1 = (SELECT COUNT(*) FROM comp)
+            )
+            RETURNING id
+        ) (SELECT id FROM ids);
         "#,
-        application_id
-    )
-    .execute(pool)
-    .await?
-    .rows_affected();
+        application_id, application_id, application_id
+    );
+    let row_affected = sqlx::query_as::<sqlx::Postgres, MyI64cringe>(&query)
+    .fetch_one(pool)
+    .await?;
 
-    Ok(rows_affected)
+    Ok(row_affected.id.unwrap())
 }

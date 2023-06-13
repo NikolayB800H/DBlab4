@@ -61,10 +61,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 900,
+        "minHeight": 900,
         "resizable": true,
         "title": "Schedule",
-        "width": 1200
+        "minWidth": 1900
       }
     ]
   }
