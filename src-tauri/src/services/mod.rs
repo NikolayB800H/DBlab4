@@ -10,3 +10,6 @@ pub mod clients_service {
 pub mod workers_service {
     pub mod workers_service;
 }
+pub mod circle_diagram_service {
+    pub mod circle_diagram_service;
+}

@@ -8,6 +8,9 @@ class Main {
         this.user = null;
         this.login = null;
         this.activeNow = activeNow;
+        this.xs = [];
+        this.ys = [];
+        this.updateDiag = null;
     }
 
     startRender() {

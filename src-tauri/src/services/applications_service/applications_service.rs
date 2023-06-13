@@ -2,7 +2,7 @@ use tauri::State;
 
 use crate::{
     db::{connection::DbConnectionPool, applications_controller},
-    model::application::dao::application_entity::ApplicationEntity
+    model::application::application_entity::ApplicationEntity
 };
 
 #[tauri::command]

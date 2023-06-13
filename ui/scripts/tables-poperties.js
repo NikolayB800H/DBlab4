@@ -1,7 +1,9 @@
 import { addNewApplication, changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
+import { getClientServicesCount, getClientServicesCountCount } from "./circle-diagram.js";
+//import { getClientAppCount, getClientAppCountCount } from "./circle-diagram-sec.js";
 import { main } from "./main.js";
 class TableProperties {
-    constructor(addTitle, title, include, allFields, types, fields, adder, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs, master, slave) {
+    constructor(addTitle, title, include, allFields, types, fields, adder, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs, master, slave, isEditable, isGeneric) {
         this.addTitle = addTitle;
         this.title = title;
         this.include = include;
@@ -24,6 +26,9 @@ class TableProperties {
         this.queryArgs = queryArgs;
         this.master = master;
         this.slave = slave;
+        this.isEditable = isEditable;
+        this.isGeneric = isGeneric;
+        this.updateXY = main.updateXYWith;
         this.types.forEach(element => {
             switch (element) {
                 case "string":
@@ -68,6 +73,13 @@ class TableProperties {
                     this.searchers.push(searchDatetime);
                     this.stylers.push(styleDatetime);
                     break;
+                case "int":
+                    this.setters.push(setInputInt);
+                    this.getters.push(getInputInt);
+                    this.froms.push(fromUserInt);
+                    this.searchers.push(searchInt);
+                    this.stylers.push(styleInt);
+                    break;
                 default:
                     console.log(`Bad type property: ${element}`);
             }
@@ -76,6 +88,8 @@ class TableProperties {
 }
 
 export let applicationTable;
+export let circleDiagramTable;
+export let circleDiagramSecTable;
 
 export function afterMain() {               // services                               | applications                                   //
     applicationTable = new TableProperties( // id, name, status, update_time, content | id, status, update_time, client_id, service_id //
@@ -95,7 +109,51 @@ export function afterMain() {               // services                         
         [main.universalId],
         [main.universalId],
         "services",
-        "applications"
+        "applications",
+        true,
+        false
+    );
+    circleDiagramTable = new TableProperties( // clients_id, clients_name, services_count //
+        "ОШИБКА",
+        "Активность клиентов (количество услуг)",
+        ["Имя клиента", "Количество услуг"],
+        ["clients_id", "clients_name", "services_count"],
+        ["string", "int"],
+        ["clients_name", "services_count"],
+        null,
+        null,
+        getClientServicesCount,
+        null,
+        getClientServicesCountCount,
+        "services-count-list",
+        "services-count-header",
+        [],
+        [],
+        null,
+        null,
+        false,
+        true
+    );
+    circleDiagramSecTable = new TableProperties( // clients_id, clients_name, applications_count //
+        "ОШИБКА",
+        "Активность клиентов (количество заявлений)",
+        ["Имя клиента", "Количество заявлений"],
+        ["clients_id", "clients_name", "services_count"],//["clients_id", "clients_name", "applications_count"]
+        ["string", "int"],
+        ["clients_name", "services_count"],//["clients_name", "applications_count"]
+        null,
+        null,
+        getClientServicesCount,//getClientAppCount
+        null,
+        getClientServicesCountCount,//getClientAppCountCount
+        "services-count-list",//"applications-count-list"
+        "services-count-header",//"applications-count-header"
+        [],
+        [],
+        null,
+        null,
+        false,
+        true
     );
 }
 
@@ -113,6 +171,12 @@ export function styleString(bar) {
 export function styleEnum(bar) { }
 
 export function styleDatetime(bar) {
+    bar.classList.remove("input");
+    bar.style.height = "26px !important";
+    bar.style.display = "inline-block !important";
+}
+
+export function styleInt(bar) {
     bar.classList.remove("input");
     bar.style.height = "26px !important";
     bar.style.display = "inline-block !important";
@@ -136,6 +200,10 @@ export function fromUserDatetime(str) {
     return `'${str.join('')}'`;
 }
 
+export function fromUserInt(str) {
+    return `${str}`;
+}
+
 export function searchString(str) {
     return `LIKE '%${str}%'`;
 }
@@ -150,6 +218,10 @@ export function searchEnum(str) {
 
 export function searchDatetime(str) {
     return `= ${fromUserDatetime(str)}`;
+}
+
+export function searchInt(str) {
+    return `= ${fromUserInt(str)}`;
 }
 
 export function getInputString(i) {
@@ -174,6 +246,11 @@ export function getInputEnum(i) {
 }
 
 export function getInputDatetime(i) {
+    if (i.value == "") return null;
+    return i.value;
+}
+
+export function getInputInt(i) {
     if (i.value == "") return null;
     return i.value;
 }
@@ -266,5 +343,18 @@ export function setInputDatetime(i, prefix) {
         "weekStart": 1
     };
     rome(bar, opitons);
+    return bar;
+}
+
+export function setInputInt(i, prefix) {
+    i.style.width = "225px";
+    let bar = document.createElement('input');
+    bar.type = "text";
+    bar.classList.add("input");
+    bar.name = i.name;
+    bar.placeholder = "...";
+    bar.addEventListener("keyup", function() {
+        this.value = this.value.replace(/[^0-9]/g, "");
+    });
     return bar;
 }

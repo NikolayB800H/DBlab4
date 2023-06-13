@@ -2,7 +2,6 @@ use chrono::prelude::*;
 use serde::Serialize;
 use sqlx::FromRow;
 
-/* rust thinks that this is normal enums without spaces XDXDXD */
 #[derive(sqlx::Type)]
 #[sqlx(type_name = "applicationStatus")]
 #[derive(Debug, Clone, Serialize)]
@@ -10,7 +9,6 @@ pub enum ApplicationStatus {
     Принято, Отклонено, Закрыто, Обрабатывается
 }
 
-/* rust thinks that this is normal enums without spaces and dots XDXDXD */
 #[derive(sqlx::Type)]
 #[sqlx(type_name = "applicationStatus")]
 #[derive(Debug, Clone, Serialize)]
@@ -18,7 +16,6 @@ pub enum ServiceName {
     Анализы, Больничный, Справка, Обследование
 }
 
-/* rust thinks that this is normal enums without spaces XDXDXD */
 #[derive(sqlx::Type)]
 #[sqlx(type_name = "applicationStatus")]
 #[derive(Debug, Clone, Serialize)]

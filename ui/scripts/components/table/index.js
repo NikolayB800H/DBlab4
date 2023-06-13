@@ -36,7 +36,8 @@ export class TableComponent {
         )
     }
 
-    async showContentList(properties) { // omagad
+    async showContentList(properties, callback) { // omagad
+        let updater = [[], []];
         let activeCol = null;
         let activeSearch = null;
         let sortWay = "";
@@ -60,11 +61,19 @@ export class TableComponent {
         const paginationList = document.getElementById('pagination-list');
         const paginationPrev = document.getElementById('pagination-previous');
         const paginationNext = document.getElementById('pagination-next');
+        const bodyp = document.getElementById("page-body");
+        const helper =  document.createElement('div');
+        helper.id = "helper";
+        bodyp.appendChild(helper);
         if (recordsList === null || recordsHeader === null || paginationList === null) {
-            return;
+            return null;
         }
         recordsHeader.replaceChildren();
     
+        /*function delay(time) {
+            return new Promise(resolve => setTimeout(resolve, time));
+        }*/
+
         async function loadList() {
             let searchCol = (activeSearch === null || searchValue == "") ? "" : properties.fields[activeSearch];
             let sortCol = (activeSort === null) ? "" : properties.fields[activeSort];
@@ -99,20 +108,22 @@ export class TableComponent {
                 recordPrevElem = recordNode;
             }
             pagesCount = await properties.counter(
-                searchCol.replace(/_/, '.'),
+                (properties.isGeneric ? searchCol : searchCol.replace(/_/, '.')),
                 searchValue,
                 ...properties.queryArgs
             );
+            //console.log(pagesCount);
             pagesCount = Math.ceil(pagesCount / rowsPerPage);
             contentRecords = await properties.loader(
-                searchCol.replace(/_/, '.'),
+                (properties.isGeneric ? searchCol : searchCol.replace(/_/, '.')),
                 searchValue,
-                sortCol.replace(/_/, '.'),
+                (properties.isGeneric ? sortCol : sortCol.replace(/_/, '.')),
                 sortWay,
                 rowsPerPage,
                 pageNow * rowsPerPage - rowsPerPage,
                 ...properties.queryArgs
             );
+            //console.log(contentRecords);
             setTimeout(function() {
             if (pageNow === 1) {
                 paginationPrev.classList.add("is-disabled");
@@ -128,6 +139,9 @@ export class TableComponent {
             recordCounter = 0;
             let recordNode = recordsList.firstChild;
             matrix = [];
+            updater = [[], []];
+            
+            //console.log("0: ", updater)
             for (const contentRecord of contentRecords) {
                 let elemTd;
                 let joinedId;
@@ -136,6 +150,10 @@ export class TableComponent {
                     if (key == `${properties.slave}_id`) joinedId = val;
                     if (properties.fields.includes(key)) {
                         let i = properties.fields.indexOf(key);
+                        if (i < 2) {
+                            updater[i].push(val);
+                            //console.log(`${i}:`, updater)
+                        }
                         elemTd = recordNode.children[i];
                         //elemTd.style.maxWidth = Math.ceil(1350/properties.fields.length) + "px";
                         if (properties.types[i] == "datetime") {
@@ -148,44 +166,49 @@ export class TableComponent {
                 }
                 matrix.push(matrixRow);
                 
-                const rowButtons = document.createElement('div');
-                rowButtons.id = `row-buttons-${recordCounter}`;
-                rowButtons.style = "visibility: hidden;";
-                
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = "✖";
-                deleteButton.title = "Удалить запись";
-                deleteButton.name = joinedId;
-                deleteButton.id = `delete-${recordCounter}`;
-                deleteButton.type = "button";
-                deleteButton.style = "margin-left: 6px";
-                deleteButton.classList.add("button");
-                deleteButton.classList.add("is-dark");
-    
-                const editButton = document.createElement('button');
-                editButton.textContent = "✎";
-                editButton.title = "Изменить запись";
-                editButton.name = joinedId;
-                editButton.id = `edit-${recordCounter}`;
-                editButton.type = "button";
-                editButton.style = "margin-left: 6px";
-                editButton.classList.add("button");
-                editButton.classList.add("is-dark");
-    
-                deleteButton.onclick = deleteClicked.bind(deleteButton, editButton, deleteButton);
-                editButton.onclick = logclick.bind(editButton, editButton, deleteButton);
-    
-                rowButtons.insertBefore(deleteButton, rowButtons.lastChild);
-                rowButtons.insertBefore(editButton, deleteButton);
-    
-                recordNode.insertBefore(rowButtons, recordNode.lastChild.nextSibling);
-                
-                recordNode.onmouseover = login.bind(recordNode, rowButtons);
-                recordNode.onmouseout = logout.bind(recordNode, rowButtons);
-                
+                if (properties.isEditable) {
+                    const rowButtons = document.createElement('div');
+                    rowButtons.id = `row-buttons-${recordCounter}`;
+                    rowButtons.style = "visibility: hidden;";
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = "✖";
+                    deleteButton.title = "Удалить запись";
+                    deleteButton.name = joinedId;
+                    deleteButton.id = `delete-${recordCounter}`;
+                    deleteButton.type = "button";
+                    deleteButton.style = "margin-left: 6px";
+                    deleteButton.classList.add("button");
+                    deleteButton.classList.add("is-dark");
+        
+                    const editButton = document.createElement('button');
+                    editButton.textContent = "✎";
+                    editButton.title = "Изменить запись";
+                    editButton.name = joinedId;
+                    editButton.id = `edit-${recordCounter}`;
+                    editButton.type = "button";
+                    editButton.style = "margin-left: 6px";
+                    editButton.classList.add("button");
+                    editButton.classList.add("is-dark");
+        
+                    deleteButton.onclick = deleteClicked.bind(deleteButton, editButton, deleteButton);
+                    editButton.onclick = logclick.bind(editButton, editButton, deleteButton);
+        
+                    rowButtons.insertBefore(deleteButton, rowButtons.lastChild);
+                    rowButtons.insertBefore(editButton, deleteButton);
+                    recordNode.insertBefore(rowButtons, recordNode.lastChild.nextSibling);
+                    
+                    recordNode.onmouseover = login.bind(recordNode, rowButtons);
+                    recordNode.onmouseout = logout.bind(recordNode, rowButtons);
+                }
                 ++recordCounter;
                 recordNode = recordNode.nextSibling;
             }
+            setTimeout(function() {
+            if (properties.isGeneric) {
+                callback(updater);
+            }
+            }, 100);
             pageBtns = [];
             paginationList.replaceChildren();
             for (let i = 1; i <= pagesCount; i++) {
@@ -207,6 +230,12 @@ export class TableComponent {
             }
             if (pageBtns.length > 0) pageBtns[pageNow - 1].classList.add("is-dark");
             }, 100);
+            //console.log("AAA",updater);
+            /*delay(1000).then(() => {
+                console.log(this.updater);
+                this.diagramComponent.render(this.updater);
+            });*/
+            //return updater;
         }
     
         function exitChange(num, editBtn, deleteBtn) {
@@ -517,14 +546,17 @@ export class TableComponent {
             prevElemTh = elemTh;
         });
     
-        await loadList();
+        let ret = await loadList();
+        //console.log(ret)
+        //console.log("AAAAAA")
+        //return ret;
     }
 
-    render() {
+    /*async */render(callback) {
         if (this.isDisplay) {
             const html = this.getHTML()
             this.parent.body.insertAdjacentHTML('beforeend', html)
-            this.showContentList(this.properties);
+            /*return await */this.showContentList(this.properties, callback);
         }
     }
 }

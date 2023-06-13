@@ -4,6 +4,7 @@ import { TrueHelloPage } from "../../pages/true-hello/index.js";
 import { RegistrationPage } from "../../pages/registration/index.js";
 import { ApplicationsPage } from "../../pages/applications/index.js";
 import { CircleDiagramPage } from "../../pages/circle-diagram/index.js";
+import { CircleDiagramSecPage } from "../../pages/circle-diagram-sec/index.js";
 import { main } from "../../main.js";
 
 export class HeaderComponent {
@@ -40,7 +41,10 @@ export class HeaderComponent {
                             <strong>Заявления</strong>
                         </a>
                         <a id="goto-circle-diagram" class="navbar-item">
-                            <strong>Статистика</strong>
+                            <strong>Активность 1</strong>
+                        </a>
+                        <a id="goto-circle-diagram-sec" class="navbar-item">
+                            <strong>Активность 2</strong>
                         </a>
                         <a id="goto-project" class="navbar-item">
                             <strong>Проект</strong>
@@ -79,15 +83,18 @@ export class HeaderComponent {
             this.gotoRegistration = document.getElementById('goto-registration');
             this.gotoApplications = document.getElementById('goto-applications');
             this.gotoCircleDiagram = document.getElementById('goto-circle-diagram');
+            this.gotoCircleDiagramSec = document.getElementById('goto-circle-diagram-sec');
             if (main.user === null) {
                 this.gotoTrueHello2.classList.add("is-hidden");
                 this.gotoApplications.classList.add("is-hidden");
                 this.gotoCircleDiagram.classList.add("is-hidden");
+                this.gotoCircleDiagramSec.classList.add("is-hidden");
             } else {
                 if (main.isWorker) {
                     this.gotoApplications.classList.add("is-hidden");
                 } else {
                     this.gotoCircleDiagram.classList.add("is-hidden");
+                    this.gotoCircleDiagramSec.classList.add("is-hidden");
                 }
                 this.gotoRegistration.classList.add("is-hidden");
                 this.gotoHello.classList.add("is-hidden");
@@ -122,6 +129,11 @@ export class HeaderComponent {
                 this.gotoCircleDiagram.classList.add("is-active");
             } else {
                 this.gotoCircleDiagram.onclick = this.onClick.bind(CircleDiagramPage);
+            }
+            if (this.parent.constructor === CircleDiagramSecPage) {
+                this.gotoCircleDiagramSec.classList.add("is-active");
+            } else {
+                this.gotoCircleDiagramSec.onclick = this.onClick.bind(CircleDiagramSecPage);
             }
         }
     }

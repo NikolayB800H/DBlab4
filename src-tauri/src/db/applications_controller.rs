@@ -1,8 +1,8 @@
 use sqlx::{
-    postgres::{PgDatabaseError, PgRow}, PgPool, FromRow, Row
+    postgres::PgRow, PgPool, FromRow, Row
 };
 use serde::Serialize;
-use crate::model::application::{dao::application_entity::ApplicationEntity};
+use crate::model::application::application_entity::ApplicationEntity;
 
 #[derive(Debug, Clone, Serialize, FromRow)]
 pub struct MyI64 {

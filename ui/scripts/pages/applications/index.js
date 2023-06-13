@@ -8,7 +8,7 @@ export class ApplicationsPage {
         this.parent = parent;
         this.id = "applications-page";
         this.properties = applicationTable;
-        this.headerComponent = new HeaderComponent(this, true)
+        this.headerComponent = new HeaderComponent(this, true);
         this.addRecordComponent = new AddRecordComponent(this, true, this.properties);
         this.tableComponent = new TableComponent(this, true, this.properties);
     }
@@ -24,15 +24,15 @@ export class ApplicationsPage {
     }
 
     get root() {
-        return document.getElementById(this.id)
+        return document.getElementById(this.id);
     }
 
     get body() {
-        return document.getElementById('page-body')
+        return document.getElementById('page-body');
     }
 
     unrender() {
-        this.parent.removeChild(this.root)
+        this.parent.removeChild(this.root);
     }
 
     render() {

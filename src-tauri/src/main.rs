@@ -9,6 +9,7 @@ pub mod services;
 
 use db::connection::establish_connection_pool;
 use services::applications_service::applications_service::*;
+use services::circle_diagram_service::circle_diagram_service::*;
 use services::users_service::users_service::*;
 use services::clients_service::clients_service::*;
 use services::workers_service::workers_service::*;
@@ -39,7 +40,9 @@ async fn main() {
             //get_all_users,
             add_user,
             //remove_user,
-            try_login_user
+            try_login_user,
+            get_client_services_count_count,
+            get_client_services_count
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]
