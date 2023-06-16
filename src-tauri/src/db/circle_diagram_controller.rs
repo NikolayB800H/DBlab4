@@ -48,21 +48,6 @@ pub async fn get_client_services_count_count(
     Ok(count.value.unwrap())
 }
 
-/*pub fn map_circle_diagram_entity(row: PgRow) -> Result<ApplicationEntity, sqlx::Error> {
-    Ok(ApplicationEntity {
-        services_id: row.try_get("services_id")?,
-        services_name: row.try_get_unchecked("services_name")?,
-        services_status: row.try_get_unchecked("services_status")?,
-        services_update_time: row.try_get("services_update_time")?,
-        services_content: row.try_get("services_content")?,
-        applications_id: row.try_get("applications_id")?,
-        applications_status: row.try_get_unchecked("applications_status")?,
-        applications_update_time: row.try_get("applications_update_time")?,
-        applications_client_id: row.try_get("applications_client_id")?,
-        applications_service_id: row.try_get("applications_service_id")?
-    })
-}*/
-
 pub async fn get_client_services_count(
     pool: &PgPool,
     search_col: String,
@@ -106,9 +91,7 @@ pub async fn get_client_services_count(
         limit,
         offset
     );
-    //let circle_diagram_entities = sqlx::query(&query)
     let circle_diagram_entities = sqlx::query_as::<sqlx::Postgres, CircleDiagramEntity>(&query)
-    //.try_map(map_circle_diagram_entity)
     .fetch_all(pool)
     .await?;
     Ok(circle_diagram_entities.into_iter().collect())

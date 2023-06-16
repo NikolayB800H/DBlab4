@@ -6,6 +6,6 @@ export function getClientServicesCountCount(searchCol, searchValue) {
 }
 
 export function getClientServicesCount(searchCol, searchValue, sortCol, sortWay, limit, offset) {
-    const applications = invoke('get_client_services_count', { searchCol, searchValue, sortCol, sortWay, limit, offset });
-    return applications;
+    const services = invoke('get_client_services_count', { searchCol, searchValue, sortCol, sortWay, limit, offset });
+    return services;
 }

@@ -1,6 +1,6 @@
 import { addNewApplication, changeApplication, getClientApplications, removeApplication, getClientApplicationsCount } from "./application.js";
 import { getClientServicesCount, getClientServicesCountCount } from "./circle-diagram.js";
-//import { getClientAppCount, getClientAppCountCount } from "./circle-diagram-sec.js";
+import { getClientAppCount, getClientAppCountCount } from "./circle-diagram-sec.js";
 import { main } from "./main.js";
 class TableProperties {
     constructor(addTitle, title, include, allFields, types, fields, adder, changer, loader, remover, counter, listId, headerId, addArgs, queryArgs, master, slave, isEditable, isGeneric) {
@@ -138,16 +138,16 @@ export function afterMain() {               // services                         
         "ОШИБКА",
         "Активность клиентов (количество заявлений)",
         ["Имя клиента", "Количество заявлений"],
-        ["clients_id", "clients_name", "services_count"],//["clients_id", "clients_name", "applications_count"]
+        ["clients_id", "clients_name", "applications_count"],
         ["string", "int"],
-        ["clients_name", "services_count"],//["clients_name", "applications_count"]
+        ["clients_name", "applications_count"],
         null,
         null,
-        getClientServicesCount,//getClientAppCount
+        getClientAppCount,
         null,
-        getClientServicesCountCount,//getClientAppCountCount
-        "services-count-list",//"applications-count-list"
-        "services-count-header",//"applications-count-header"
+        getClientAppCountCount,
+        "applications-count-list",
+        "applications-count-header",
         [],
         [],
         null,
