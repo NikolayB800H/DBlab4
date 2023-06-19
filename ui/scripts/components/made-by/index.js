@@ -32,7 +32,7 @@ export class MadeByComponent {
                 <!-- Hero footer: will stick at the bottom -->
                 <div class="hero-foot">
                     <h1 style="text-align: center; font-size: 30px; margin-bottom: 20px;">
-                        Технологическая практика курса "Базы Данных", 4-ый семестр кафедры ИУ5
+                        Курсовая работа дисциплины "Базы Данных", 4-ый семестр кафедры ИУ5
                     </h1>
                 </div>
             </section>

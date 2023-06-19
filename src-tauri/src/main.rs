@@ -11,9 +11,13 @@ use db::connection::establish_connection_pool;
 use services::applications_service::applications_service::*;
 use services::circle_diagram_service::circle_diagram_service::*;
 use services::circle_diagram_sec_service::circle_diagram_sec_service::*;
+use services::diagram_thi_service::diagram_thi_service::*;
 use services::users_service::users_service::*;
 use services::clients_service::clients_service::*;
 use services::workers_service::workers_service::*;
+use services::workers_servs_service::workers_servs_service::*;
+use services::workers_appls_service::workers_appls_service::*;
+use services::workers_clients_service::workers_clients_service::*;
 use tauri::Manager;
 
 #[tokio::main]
@@ -45,7 +49,19 @@ async fn main() {
             get_client_services_count_count,
             get_client_services_count,
             get_client_app_count_count,
-            get_client_app_count
+            get_client_app_count,
+            get_client_coef_count,
+            get_client_coef,
+            worker_get_services_count,
+            worker_get_services,
+            worker_remove_services,
+            worker_change_services,
+            worker_get_applications_count,
+            worker_get_applications,
+            worker_remove_applications,
+            worker_change_applications,
+            worker_get_clients_count,
+            worker_get_clients
         ])
         .setup(|app| {
             #[cfg(debug_assertions)]

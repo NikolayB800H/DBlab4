@@ -23,8 +23,7 @@ pub async fn get_client_services_count_count(
             SELECT stats.clients_id, stats.clients_name, COUNT(DISTINCT stats.services_id) AS services_count
             FROM (
                 SELECT clients_id, clients_name, applications_id, services.id AS services_id
-                FROM services
-                LEFT JOIN (
+                FROM (
                     SELECT clients.id AS clients_id,
                         clients.name AS clients_name,
                         applications.id AS applications_id,
@@ -33,6 +32,7 @@ pub async fn get_client_services_count_count(
                     LEFT JOIN applications
                     ON clients.id = applications.client_id
                 ) AS joined
+                LEFT JOIN services
                 ON services.id = joined.applications_service_id
             ) AS stats
             GROUP BY stats.clients_id, stats.clients_name
@@ -67,8 +67,7 @@ pub async fn get_client_services_count(
             SELECT stats.clients_id, stats.clients_name, COUNT(DISTINCT stats.services_id) AS services_count
             FROM (
                 SELECT clients_id, clients_name, applications_id, services.id AS services_id
-                FROM services
-                LEFT JOIN (
+                FROM (
                     SELECT clients.id AS clients_id,
                         clients.name AS clients_name,
                         applications.id AS applications_id,
@@ -77,6 +76,7 @@ pub async fn get_client_services_count(
                     LEFT JOIN applications
                     ON clients.id = applications.client_id
                 ) AS joined
+                LEFT JOIN services
                 ON services.id = joined.applications_service_id
             ) AS stats
             GROUP BY stats.clients_id, stats.clients_name

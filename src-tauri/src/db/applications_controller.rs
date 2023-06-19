@@ -26,7 +26,7 @@ pub async fn change_application(
         r#"
         WITH ids AS (
             UPDATE applications
-            SET status = {}, update_time = {}
+            SET status = {}, update_time = current_timestamp
             WHERE applications.id = {}
             RETURNING applications.id
         )
@@ -42,7 +42,7 @@ pub async fn change_application(
         RETURNING services.id
         "#,
         applications_status,
-        applications_update_time,
+        //applications_update_time,
         application_id,
         services_name,
         services_content,
@@ -135,7 +135,7 @@ pub async fn get_client_applications(
         "#,
         client_id,
         if search_col.len() == 0 { r#""# } else { second },
-        if sort_col.len() == 0 { r#""# } else { third },
+        if sort_col.len() == 0 { r#"ORDER BY services_id"# } else { third },
         limit,
         offset
     );
@@ -162,13 +162,13 @@ pub async fn add_application(
             RETURNING id
         )
         INSERT INTO applications (status, update_time, client_id, service_id)
-        VALUES ( {}, {}, {}, (SELECT id FROM ids) )
+        VALUES ( 'Обрабатывается', current_timestamp, {}, (SELECT id FROM ids) )
         RETURNING id
         "#,
         services_name,
         services_content,
-        applications_status,
-        applications_update_time,
+        //applications_status,
+        //applications_update_time,
         applications_client_id
     );
     let count = sqlx::query_as::<sqlx::Postgres, MyI64cringe>(&query)

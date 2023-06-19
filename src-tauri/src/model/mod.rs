@@ -4,3 +4,8 @@ pub mod client;
 pub mod worker;
 pub mod circle_diagram;
 pub mod circle_diagram_sec;
+pub mod diagram_thi;
+pub mod worker_servs;
+pub mod worker_appls;
+pub mod worker_clients;
+pub mod enums;

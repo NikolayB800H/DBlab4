@@ -1,3 +1,6 @@
+import { WorkerApplicationsPage } from "../../pages/worker-appls/index.js"; // kostil
+import { main } from "../../main.js"; // kostil
+
 export class TableComponent {
     constructor(parent, isDisplay, properties) {
         this.parent = parent;
@@ -8,7 +11,7 @@ export class TableComponent {
     getHTML() {
         return (
             `
-            <section class="section px-0">
+            <section id="marginer" class="section px-0">
             <div class="box" style="margin-bottom: -50px !important;">
                 <h1 style="text-align: center; font-size: 30px;">
                     <strong>${this.properties.title}</strong>
@@ -141,18 +144,26 @@ export class TableComponent {
             matrix = [];
             updater = [[], []];
             
-            //console.log("0: ", updater)
+            let prevMasterId = "";
             for (const contentRecord of contentRecords) {
                 let elemTd;
                 let joinedId;
                 let matrixRow = new Array(properties.fields.length);
+                let hide = false;
                 for (let [key, val] of Object.entries(contentRecord)) {
                     if (key == `${properties.slave}_id`) joinedId = val;
+                    if (properties.master !== "$") {
+                        if (key == `${properties.master}_id`) {
+                            if (prevMasterId == val) {
+                                hide = true;
+                            }
+                            prevMasterId = val;
+                        }
+                    }
                     if (properties.fields.includes(key)) {
                         let i = properties.fields.indexOf(key);
                         if (i < 2) {
                             updater[i].push(val);
-                            //console.log(`${i}:`, updater)
                         }
                         elemTd = recordNode.children[i];
                         //elemTd.style.maxWidth = Math.ceil(1350/properties.fields.length) + "px";
@@ -162,6 +173,13 @@ export class TableComponent {
                         const elem = elemTd.firstChild;
                         elem.innerHTML = `${val}`;
                         matrixRow[i] = elem;
+                    }
+                }
+                if (hide) {
+                    for (let i = 0; i < properties.fields.length; ++i) {
+                        if (properties.fields[i].startsWith(properties.master)) {
+                            matrixRow[i].innerHTML = "↑";
+                        }
                     }
                 }
                 matrix.push(matrixRow);
@@ -196,10 +214,25 @@ export class TableComponent {
         
                     rowButtons.insertBefore(deleteButton, rowButtons.lastChild);
                     rowButtons.insertBefore(editButton, deleteButton);
-                    recordNode.insertBefore(rowButtons, recordNode.lastChild.nextSibling);
-                    
+
+                    //if(properties.canDelete) {}
+                    if(properties.canGoSlave) {
+                        const goSlaveButton = document.createElement('button');
+                        goSlaveButton.textContent = "➟";
+                        goSlaveButton.title = "Заявления по услуге";
+                        goSlaveButton.name = joinedId;
+                        goSlaveButton.id = `go-slave-${recordCounter}`;
+                        goSlaveButton.type = "button";
+                        goSlaveButton.style = "margin-left: 6px";
+                        goSlaveButton.classList.add("button");
+                        goSlaveButton.classList.add("is-dark");
+                        goSlaveButton.onclick = goSlave.bind(goSlaveButton, goSlaveButton);
+                        rowButtons.insertBefore(goSlaveButton, rowButtons.lastChild.nextSibling);
+                    }
+
                     recordNode.onmouseover = login.bind(recordNode, rowButtons);
                     recordNode.onmouseout = logout.bind(recordNode, rowButtons);
+                    recordNode.insertBefore(rowButtons, recordNode.lastChild.nextSibling);
                 }
                 ++recordCounter;
                 recordNode = recordNode.nextSibling;
@@ -208,7 +241,7 @@ export class TableComponent {
             if (properties.isGeneric) {
                 callback(updater);
             }
-            }, 100);
+            }, 0);
             pageBtns = [];
             paginationList.replaceChildren();
             for (let i = 1; i <= pagesCount; i++) {
@@ -230,12 +263,6 @@ export class TableComponent {
             }
             if (pageBtns.length > 0) pageBtns[pageNow - 1].classList.add("is-dark");
             }, 100);
-            //console.log("AAA",updater);
-            /*delay(1000).then(() => {
-                console.log(this.updater);
-                this.diagramComponent.render(this.updater);
-            });*/
-            //return updater;
         }
     
         function exitChange(num, editBtn, deleteBtn) {
@@ -244,8 +271,10 @@ export class TableComponent {
             deleteBtn.textContent = "✖";
             deleteBtn.title = "Удалить запись";
             blockChoice = false;
+            let i = 0;
             matrix[num].forEach(element => {
-                element.removeChild(element.lastChild);
+                if (!properties.fields[i].startsWith(properties.master)) element.removeChild(element.lastChild);
+                ++i;
             });
         }
     
@@ -300,6 +329,11 @@ export class TableComponent {
             const changedId = await properties.changer(id, ...args);
             await loadList();
         }
+
+        function goSlave(button) {
+            main.activeService = parseInt(button.name);
+            main.updateActiveNowWith(new WorkerApplicationsPage(main.activeNow.parent));
+        }
     
         function logclick(editBtn, deleteBtn) {
             if (matrix === null) return;
@@ -316,13 +350,15 @@ export class TableComponent {
                     undoChange = [];
                     for (let i = 0; i < properties.types.length; ++i) {
                         undoChange.push(matrix[num][i].firstChild.nodeValue);
-                        barShow(i, matrix[num], matrix[num], "change", changeClick);
+                        if (!properties.fields[i].startsWith(properties.master) & properties.types[i] != "datetime") barShow(i, matrix[num], matrix[num], "change", changeClick);
                     }
                     break;
                 case "✅":
                     let toSave = [];
+                    let i = 0;
                     matrix[num].forEach(element => {
-                        toSave.push(element.firstChild.nodeValue);
+                        if (!properties.fields[i].startsWith(properties.master)) toSave.push(element.firstChild.nodeValue);
+                        ++i;
                     });
                     saveChanges(parseInt(editBtn.name), toSave);
                     exitChange(num, editBtn, deleteBtn);
@@ -546,17 +582,15 @@ export class TableComponent {
             prevElemTh = elemTh;
         });
     
-        let ret = await loadList();
-        //console.log(ret)
-        //console.log("AAAAAA")
-        //return ret;
+        await loadList();
     }
 
-    /*async */render(callback) {
+    render(callback) {
         if (this.isDisplay) {
             const html = this.getHTML()
             this.parent.body.insertAdjacentHTML('beforeend', html)
-            /*return await */this.showContentList(this.properties, callback);
+            if (this.properties.isGeneric) document.getElementById("marginer").classList.add("pt-0", "pb-5", "mb-5");
+            this.showContentList(this.properties, callback);
         }
     }
 }

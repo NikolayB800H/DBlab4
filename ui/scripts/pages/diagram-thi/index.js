@@ -1,16 +1,15 @@
 import { HeaderComponent } from "../../components/header/index.js";
+import { GraphComponent } from "../../components/graph/index.js";
 import { TableComponent } from "../../components/table/index.js";
-import { AddRecordComponent } from "../../components/add-record/index.js";
-import { applicationTable, addApplOnServSQL } from "../../tables-poperties.js";
+import { diagramThiTable } from "../../tables-poperties.js";
 
-export class ApplicationsPage {
+export class DiagramThiPage {
     constructor(parent) {
         this.parent = parent;
-        this.id = "applications-page";
-        this.properties = applicationTable;
+        this.id = "diagram-thi-page";
+        this.properties = diagramThiTable;
         this.headerComponent = new HeaderComponent(this, true);
-        this.addRecordComponent = new AddRecordComponent(this, true, this.properties);
-        this.addNotImpl = new AddRecordComponent(this, true, addApplOnServSQL);
+        this.graphComponent = new GraphComponent(this, true);
         this.tableComponent = new TableComponent(this, true, this.properties);
     }
 
@@ -42,8 +41,12 @@ export class ApplicationsPage {
         this.parent.insertAdjacentHTML('beforeend', html);
 
         this.headerComponent.render();
-        this.addRecordComponent.render();
-        this.addNotImpl.render();
-        this.tableComponent.render();
+        this.tableComponent.render(this.graphComponent.render);
+        /*
+        const bodyp = document.getElementById("page-body");
+        const helper =  document.createElement('div');
+        helper.id = "helper";
+        bodyp.appendChild(helper);
+        this.graphComponent.render([["a", "b", "c"], [1.2, 1.1, 4.2]]); */
     }
 }

@@ -1,11 +1,6 @@
-import { HelloPage } from "../../pages/hello/index.js";
-import { ProjectPage } from "../../pages/project/index.js";
 import { TrueHelloPage } from "../../pages/true-hello/index.js";
-import { RegistrationPage } from "../../pages/registration/index.js";
-import { ApplicationsPage } from "../../pages/applications/index.js";
-import { CircleDiagramPage } from "../../pages/circle-diagram/index.js";
-import { CircleDiagramSecPage } from "../../pages/circle-diagram-sec/index.js";
 import { main } from "../../main.js";
+import { rightAfterMain, PageProperties } from "../../pages-properties.js";
 
 export class HeaderComponent {
     constructor(parent, isDisplay) {
@@ -36,7 +31,7 @@ export class HeaderComponent {
                     </a>
                 </div>
                 <div id="navbarBasicExample" class="navbar-menu" style="margin-left: 0 !important;">
-                    <div class="navbar-start">
+                    <div id="navbar-start" class="navbar-start">
                         <a id="goto-applications" class="navbar-item">
                             <strong>Заявления</strong>
                         </a>
@@ -52,7 +47,7 @@ export class HeaderComponent {
                     </div>
                     <div class="navbar-end">
                         <div class="navbar-item">
-                            <div class="buttons">
+                            <div id="navbar-end" class="buttons">
                                 <a id="goto-true-hello-2" class="button is-light">
                                     <strong>Выход</strong>
                                 </a>
@@ -74,66 +69,69 @@ export class HeaderComponent {
     
     render() {
         if (this.isDisplay) {
+            rightAfterMain();
             const html = this.getHTML();
-            this.parent.root.insertAdjacentHTML('afterbegin', html)
-            this.gotoProject = document.getElementById('goto-project');
-            this.gotoHello = document.getElementById('goto-hello');
-            this.gotoTrueHello1 = document.getElementById('goto-true-hello-1');
-            this.gotoTrueHello2 = document.getElementById('goto-true-hello-2');
-            this.gotoRegistration = document.getElementById('goto-registration');
-            this.gotoApplications = document.getElementById('goto-applications');
-            this.gotoCircleDiagram = document.getElementById('goto-circle-diagram');
-            this.gotoCircleDiagramSec = document.getElementById('goto-circle-diagram-sec');
-            if (main.user === null) {
-                this.gotoTrueHello2.classList.add("is-hidden");
-                this.gotoApplications.classList.add("is-hidden");
-                this.gotoCircleDiagram.classList.add("is-hidden");
-                this.gotoCircleDiagramSec.classList.add("is-hidden");
-            } else {
-                if (main.isWorker) {
-                    this.gotoApplications.classList.add("is-hidden");
+            this.parent.root.insertAdjacentHTML('afterbegin', html);
+            const startList = document.getElementById("navbar-start");
+            startList.replaceChildren();
+            const endList = document.getElementById("navbar-end");
+            endList.replaceChildren();
+            let buttons = [];
+            let control = [];
+            PageProperties.allPagesProperties.forEach(element => {
+                const newBtn =  document.createElement('a');
+                newBtn.id = `goto-${element.name}`;
+                newBtn.innerHTML = `<strong>${element.btnLabel}</strong>`;
+                if (element.buttonIsNavStart) {
+                    buttons.push(newBtn);
+                    newBtn.classList.add("navbar-item");
+                    startList.appendChild(newBtn);
                 } else {
-                    this.gotoCircleDiagram.classList.add("is-hidden");
-                    this.gotoCircleDiagramSec.classList.add("is-hidden");
+                    control.push(newBtn);
+                    newBtn.classList.add("button");
+                    newBtn.classList.add("is-light");
+                    endList.appendChild(newBtn);
                 }
-                this.gotoRegistration.classList.add("is-hidden");
-                this.gotoHello.classList.add("is-hidden");
-                this.gotoTrueHello2.onclick = this.signoutEvent.bind(this.gotoTrueHello2);
-            }
-            if (this.parent.constructor === HelloPage) {
-                this.gotoHello.classList.add("is-hidden");
+                if (this.parent.constructor === element.constructor & element.id != "true-hello-page") {
+                    if (element.buttonIsNavStart) {
+                        newBtn.classList.add("is-active");
+                    } else {
+                        newBtn.classList.add("is-hidden");
+                    }
+                } else {
+                    if (element.id == "true-hello-page") {
+                        newBtn.onclick = this.signoutEvent.bind(newBtn);
+                    } else {
+                        newBtn.onclick = this.onClick.bind(element.constructor);
+                    }
+                }
+                if (main.user === null) {   // all
+                    if (!element.isForAll) {
+                        newBtn.classList.add("is-hidden");
+                    }
+                } else {
+                    if (main.isWorker) {    // worker
+                        if (!element.isForWorker) {
+                            newBtn.classList.add("is-hidden");
+                        }
+                    } else {                // client
+                        if (!element.isForClient) {
+                            newBtn.classList.add("is-hidden");
+                        }
+                    }
+                }
+            });
+            this.gotoTrueHello1 = document.getElementById('goto-true-hello-1');
+            if (main.user === null) {
+                control[2].classList.add("is-hidden");
             } else {
-                this.gotoHello.onclick = this.onClick.bind(HelloPage);
-            }
-            if (this.parent.constructor === ProjectPage) {
-                this.gotoProject.classList.add("is-active");
-            } else {
-                this.gotoProject.onclick = this.onClick.bind(ProjectPage);
+                control[1].classList.add("is-hidden");
+                control[0].classList.add("is-hidden");
             }
             if (this.parent.constructor === TrueHelloPage) {
                 this.gotoTrueHello1.classList.add("is-active");
             } else {
                 this.gotoTrueHello1.onclick = this.onClick.bind(TrueHelloPage);
-            }
-            if (this.parent.constructor === RegistrationPage) {
-                this.gotoRegistration.classList.add("is-hidden");
-            } else {
-                this.gotoRegistration.onclick = this.onClick.bind(RegistrationPage);
-            }
-            if (this.parent.constructor === ApplicationsPage) {
-                this.gotoApplications.classList.add("is-active");
-            } else {
-                this.gotoApplications.onclick = this.onClick.bind(ApplicationsPage);
-            }
-            if (this.parent.constructor === CircleDiagramPage) {
-                this.gotoCircleDiagram.classList.add("is-active");
-            } else {
-                this.gotoCircleDiagram.onclick = this.onClick.bind(CircleDiagramPage);
-            }
-            if (this.parent.constructor === CircleDiagramSecPage) {
-                this.gotoCircleDiagramSec.classList.add("is-active");
-            } else {
-                this.gotoCircleDiagramSec.onclick = this.onClick.bind(CircleDiagramSecPage);
             }
         }
     }

@@ -1,16 +1,14 @@
 import { HeaderComponent } from "../../components/header/index.js";
 import { TableComponent } from "../../components/table/index.js";
-import { AddRecordComponent } from "../../components/add-record/index.js";
-import { applicationTable, addApplOnServSQL } from "../../tables-poperties.js";
+import { workerApplicationsTable } from "../../tables-poperties.js";
+import { main } from "../../main.js";
 
-export class ApplicationsPage {
+export class WorkerApplicationsPage {
     constructor(parent) {
         this.parent = parent;
-        this.id = "applications-page";
-        this.properties = applicationTable;
+        this.id = "worker-appls-page";
+        this.properties = workerApplicationsTable;
         this.headerComponent = new HeaderComponent(this, true);
-        this.addRecordComponent = new AddRecordComponent(this, true, this.properties);
-        this.addNotImpl = new AddRecordComponent(this, true, addApplOnServSQL);
         this.tableComponent = new TableComponent(this, true, this.properties);
     }
 
@@ -42,8 +40,7 @@ export class ApplicationsPage {
         this.parent.insertAdjacentHTML('beforeend', html);
 
         this.headerComponent.render();
-        this.addRecordComponent.render();
-        this.addNotImpl.render();
+        this.properties.queryArgs[0] = main.activeService;
         this.tableComponent.render();
     }
 }

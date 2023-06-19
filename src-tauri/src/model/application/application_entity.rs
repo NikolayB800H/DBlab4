@@ -1,27 +1,7 @@
 use chrono::prelude::*;
 use serde::Serialize;
 use sqlx::FromRow;
-
-#[derive(sqlx::Type)]
-#[sqlx(type_name = "applicationStatus")]
-#[derive(Debug, Clone, Serialize)]
-pub enum ApplicationStatus {
-    Принято, Отклонено, Закрыто, Обрабатывается
-}
-
-#[derive(sqlx::Type)]
-#[sqlx(type_name = "applicationStatus")]
-#[derive(Debug, Clone, Serialize)]
-pub enum ServiceName {
-    Анализы, Больничный, Справка, Обследование
-}
-
-#[derive(sqlx::Type)]
-#[sqlx(type_name = "applicationStatus")]
-#[derive(Debug, Clone, Serialize)]
-pub enum ServiceStatus {
-    Выполнена, Провалена, Неначата
-}
+use crate::model::enums::enums::*;
 
 /* services                               | applications                                   */
 /* id, name, status, update_time, content | id, status, update_time, client_id, service_id */
